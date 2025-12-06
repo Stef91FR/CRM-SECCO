@@ -26,6 +26,42 @@ body {
   margin: 0 auto 48px;
 }
 
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.tab-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--muted);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tab-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tab-btn.is-active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.is-active {
+  display: block;
+}
+
 .app__header {
   display: flex;
   align-items: center;
@@ -236,6 +272,104 @@ h2 {
 
 .status-warning {
   color: #d97706;
+}
+
+.filter-block {
+  min-width: 280px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.chip.is-active {
+  background: rgba(11, 140, 111, 0.12);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip--closable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip--closable button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.table-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
+  max-height: 520px;
+  overflow-y: auto;
+  outline: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th,
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 1;
+  font-weight: 800;
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background 0.08s ease;
+}
+
+tbody tr:hover {
+  background: #f2f5ff;
+}
+
+tbody tr.is-selected {
+  background: rgba(11, 140, 111, 0.14);
 }
 
 @media (max-width: 720px) {
