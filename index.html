@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base EHPAD – Navigateur de fiches</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app__header">
+      <div>
+        <p class="eyebrow">Explorateur CSV</p>
+        <h1>Base EHPAD</h1>
+        <p class="lede">Parcourez, recherchez et modifiez les fiches de <code>base_ehpad.csv</code> facilement.</p>
+      </div>
+      <div class="badge">CSV local</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel__row">
+        <div class="nav-controls">
+          <button id="prevBtn" class="btn" disabled>◀ Précédent</button>
+          <div class="badge badge--ghost">
+            <span id="currentIndex">0</span> / <span id="totalCount">0</span>
+          </div>
+          <button id="nextBtn" class="btn" disabled>Suivant ▶</button>
+        </div>
+        <div class="actions">
+          <label class="inline">
+            Aller à la fiche
+            <input id="jumpInput" type="number" min="1" class="input" />
+          </label>
+          <button id="jumpBtn" class="btn btn--ghost">Aller</button>
+        </div>
+      </div>
+
+      <div class="panel__row panel__row--wrap">
+        <label class="inline">
+          Rechercher
+          <input id="searchInput" type="search" placeholder="Nom, ville, gestionnaire..." class="input" />
+        </label>
+        <button id="searchBtn" class="btn btn--ghost">Rechercher</button>
+        <button id="saveBtn" class="btn btn--primary" disabled>Enregistrer les modifications</button>
+        <button id="downloadBtn" class="btn">Télécharger le CSV</button>
+        <label class="file-upload btn btn--ghost">
+          Charger un CSV
+          <input id="fileInput" type="file" accept=".csv,text/csv" />
+        </label>
+      </div>
+      <p class="helper" id="statusMessage"></p>
+    </section>
+
+    <section class="card">
+      <div class="card__title">
+        <div>
+          <p class="eyebrow">Fiche en cours</p>
+          <h2 id="recordTitle">Sélectionnez une fiche</h2>
+        </div>
+        <div class="pill" id="recordId"></div>
+      </div>
+      <div id="fieldsContainer" class="fields"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
