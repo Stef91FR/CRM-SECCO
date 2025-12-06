@@ -5,6 +5,7 @@ const state = {
   inputs: [],
   isDirty: false,
   departments: [],
+  rowDepts: [],
   filters: {
     dept: '',
     terms: [],
@@ -44,6 +45,22 @@ const resultsTitle = document.getElementById('resultsTitle');
 const resultsCount = document.getElementById('resultsCount');
 const resultsTableBody = document.querySelector('#resultsTable tbody');
 const resultsWrapper = document.getElementById('resultsWrapper');
+
+function normalizeDeptCode(value = '') {
+  if (!value) return '';
+  const raw = String(value).trim().toUpperCase();
+  const match = raw.match(/^0*(\d{2,3}|2A|2B)$/);
+  return match ? match[1].replace(/^0+/, '') || match[1] : raw;
+}
+
+function deriveDeptFromPostcode(postcode = '') {
+  const trimmed = String(postcode || '').trim();
+  if (!trimmed) return '';
+  if (/^(97|98)/.test(trimmed)) {
+    return trimmed.slice(0, 3);
+  }
+  return trimmed.slice(0, 2);
+}
 
 function setStatus(message, type = 'muted') {
   const classes = { ok: 'status-ok', warning: 'status-warning', muted: '' };
@@ -214,15 +231,8 @@ function renderDeptChips(departments) {
 }
 
 function buildDeptFilters() {
-  const deptIndex = getColumnIndex('coordinates.deptcode');
-  if (deptIndex < 0) return;
-  const uniqueDepts = Array.from(
-    new Set(
-      state.rows
-        .map(r => (r[deptIndex] || '').trim())
-        .filter(Boolean)
-    )
-  ).sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
+  const uniqueDepts = Array.from(new Set(state.rowDepts.filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
 
   state.departments = uniqueDepts;
 
@@ -311,12 +321,12 @@ function renderResultsTable() {
 }
 
 function applyFilters() {
-  const deptIdx = getColumnIndex('coordinates.deptcode');
+  const targetDept = normalizeDeptCode(state.filters.dept);
   const terms = state.filters.terms.map(t => t.toLowerCase());
   let indexes = state.rows.map((_, i) => i);
 
-  if (state.filters.dept && deptIdx >= 0) {
-    indexes = indexes.filter(i => (state.rows[i][deptIdx] || '').trim() === state.filters.dept.trim());
+  if (targetDept) {
+    indexes = indexes.filter(i => state.rowDepts[i] === targetDept);
   }
 
   if (terms.length) {
@@ -349,6 +359,14 @@ function loadData(rows) {
   }
   state.headers = rows[0];
   state.rows = rows.slice(1).map(r => padRow(r, state.headers.length));
+  const deptIndex = getColumnIndex('coordinates.deptcode');
+  const postcodeIndex = getColumnIndex('coordinates.postcode');
+  state.rowDepts = state.rows.map(row =>
+    normalizeDeptCode(
+      (deptIndex >= 0 ? row[deptIndex] : '') ||
+        deriveDeptFromPostcode(postcodeIndex >= 0 ? row[postcodeIndex] : '')
+    )
+  );
   buildForm(state.headers);
   state.currentIndex = 0;
   displayRecord(0);
