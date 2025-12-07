@@ -582,6 +582,26 @@ h2 {
   color: #d1fae5;
 }
 
+/* Ensure Statut légal labels remain legible on dark backgrounds */
+.eyebrow {
+  color: #ffffff !important;
+}
+
+#statusFilter .check-chip {
+  color: #e0e0e0 !important;
+}
+
+#statusFilter .check-chip span,
+#statusFilter .check-chip svg,
+#statusFilter .check-chip * {
+  color: #e0e0e0 !important;
+  fill: #e0e0e0 !important;
+}
+
+#statusFilter .check-chip input:checked + span {
+  color: #ffffff !important;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
