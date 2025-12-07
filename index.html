@@ -17,11 +17,11 @@
       <div class="badge">CSV local</div>
     </header>
 
-    <nav class="tabs">
-      <button class="tab-btn is-active" data-tab="ficheTab">Fiches</button>
-      <button class="tab-btn" data-tab="triTab">Tri &amp; recherche</button>
-      <button class="tab-btn" data-tab="prospectionTab">Prospection</button>
-    </nav>
+      <nav class="tabs">
+        <button class="tab-btn is-active" data-tab="ficheTab">Fiches</button>
+        <button class="tab-btn" data-tab="triTab">Tri &amp; recherche</button>
+        <button class="tab-btn" data-tab="prospectionTab">Prospection</button>
+      </nav>
 
     <div id="ficheTab" class="tab-content is-active">
       <section class="panel">
@@ -89,6 +89,11 @@
           </div>
 
           <div class="filter-block">
+            <p class="eyebrow">Statut légal</p>
+            <div id="statusFilter" class="chip-grid"></div>
+          </div>
+
+          <div class="filter-block">
             <p class="eyebrow">Recherche multi-champs</p>
             <div class="inline">
               <input id="termInput" class="input" type="search" placeholder="Ajouter un terme (nom, ville, gestionnaire...)" />
@@ -116,6 +121,7 @@
                 <th>ID</th>
                 <th>Nom</th>
                 <th>Département</th>
+                <th>Statut légal</th>
                 <th>Ville</th>
                 <th>Capacité</th>
                 <th>Tél</th>
@@ -215,6 +221,10 @@
                 <button id="prospectResetFilters" class="btn">Réinitialiser</button>
               </div>
             </div>
+            <div class="filter-block">
+              <p class="eyebrow">Statut légal</p>
+              <div id="prospectStatusFilter" class="chip-grid"></div>
+            </div>
           </div>
           <p class="helper" id="prospectFilterStatus">Filtres appliqués sur les prospections actives.</p>
         </section>
@@ -230,12 +240,13 @@
           <div class="table-wrapper" tabindex="0" id="prospectResultsWrapper">
             <table id="prospectResultsTable">
               <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Département</th>
-                  <th>Ville</th>
-                  <th>1er contact</th>
-                  <th>Rappel</th>
+              <tr>
+                <th>Nom</th>
+                <th>Département</th>
+                <th>Statut légal</th>
+                <th>Ville</th>
+                <th>1er contact</th>
+                <th>Rappel</th>
                   <th>Commentaires</th>
                 </tr>
               </thead>

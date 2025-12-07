@@ -5,11 +5,13 @@ const state = {
   inputs: [],
   isDirty: false,
   departments: [],
+  legalStatuses: [],
   deptRange: 'range1',
   rowDepts: [],
   filters: {
     dept: '',
     terms: [],
+    statuses: [],
     filteredIndexes: [],
     selectedResult: -1,
   },
@@ -20,6 +22,7 @@ const state = {
     date2Start: '',
     date2End: '',
     commentTerm: '',
+    statuses: [],
     filteredIndexes: [],
   },
 };
@@ -83,6 +86,8 @@ const resultsTitle = document.getElementById('resultsTitle');
 const resultsCount = document.getElementById('resultsCount');
 const resultsTableBody = document.querySelector('#resultsTable tbody');
 const resultsWrapper = document.getElementById('resultsWrapper');
+const statusFilter = document.getElementById('statusFilter');
+const prospectStatusFilter = document.getElementById('prospectStatusFilter');
 
 function normalizeDeptCode(value = '') {
   if (!value) return '';
@@ -95,6 +100,14 @@ function sanitizeDeptCode(value = '') {
   const normalized = normalizeDeptCode(value);
   if (normalized === '0' || normalized === '13.5') return '';
   return normalized;
+}
+
+function toggleSelection(list, value, checked) {
+  const next = list.filter(item => item !== value);
+  if (checked && value) {
+    next.push(value);
+  }
+  return next;
 }
 
 function deriveDeptFromPostcode(postcode = '') {
@@ -341,6 +354,51 @@ function renderDeptChips(departments) {
   });
 }
 
+function renderStatusGroup(container, selectedList, onChange) {
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!state.legalStatuses.length) {
+    const span = document.createElement('span');
+    span.className = 'muted';
+    span.textContent = 'Aucun statut légal trouvé dans la feuille';
+    container.appendChild(span);
+    return;
+  }
+
+  state.legalStatuses.forEach(status => {
+    const label = document.createElement('label');
+    label.className = 'check-chip';
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = status;
+    input.checked = selectedList.includes(status);
+    input.addEventListener('change', () => onChange(status, input.checked));
+
+    const text = document.createElement('span');
+    text.textContent = status;
+
+    label.appendChild(input);
+    label.appendChild(text);
+    container.appendChild(label);
+  });
+}
+
+function renderStatusFilters() {
+  renderStatusGroup(statusFilter, state.filters.statuses, (status, checked) => {
+    state.filters.statuses = toggleSelection(state.filters.statuses, status, checked);
+    applyFilters();
+    renderStatusFilters();
+  });
+
+  renderStatusGroup(prospectStatusFilter, state.prospection.statuses, (status, checked) => {
+    state.prospection.statuses = toggleSelection(state.prospection.statuses, status, checked);
+    applyProspectionFilters();
+    renderStatusFilters();
+  });
+}
+
 function refreshDeptChips() {
   renderDeptChips(filterDepartmentsByRange(state.deptRange));
 }
@@ -413,13 +471,14 @@ function renderResultsTable() {
   const nameIdx = getColumnIndex('title');
   const deptIdx = getColumnIndex('coordinates.deptcode');
   const cityIdx = getColumnIndex('coordinates.city');
+  const legalIdx = getColumnIndex('legal_status');
   const capacityIdx = getColumnIndex('capacity');
   const phoneIdx = getColumnIndex('coordinates.phone');
 
   if (!state.filters.filteredIndexes.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 6;
+    cell.colSpan = 7;
     cell.textContent = 'Aucun résultat pour ces critères.';
     row.appendChild(cell);
     resultsTableBody.appendChild(row);
@@ -437,7 +496,9 @@ function renderResultsTable() {
       tr.classList.add('is-selected');
     }
     tr.dataset.index = rowIndex;
-    const cells = [idIdx, nameIdx, deptIdx, cityIdx, capacityIdx, phoneIdx].map(idx => (idx >= 0 ? row[idx] || '' : ''));
+    const cells = [idIdx, nameIdx, deptIdx, legalIdx, cityIdx, capacityIdx, phoneIdx].map(idx =>
+      idx >= 0 ? row[idx] || '' : ''
+    );
     cells.forEach(value => {
       const td = document.createElement('td');
       td.textContent = value;
@@ -461,10 +522,20 @@ function renderResultsTable() {
 function applyFilters() {
   const targetDept = sanitizeDeptCode(state.filters.dept);
   const terms = state.filters.terms.map(t => t.toLowerCase());
+  const legalIdx = getColumnIndex('legal_status');
+  const statusFilters = state.filters.statuses.map(s => s.toLowerCase());
   let indexes = state.rows.map((_, i) => i);
 
   if (targetDept) {
     indexes = indexes.filter(i => state.rowDepts[i] === targetDept);
+  }
+
+  if (statusFilters.length) {
+    if (legalIdx < 0) {
+      indexes = [];
+    } else {
+      indexes = indexes.filter(i => statusFilters.includes(String(state.rows[i][legalIdx] || '').trim().toLowerCase()));
+    }
   }
 
   if (terms.length) {
@@ -520,11 +591,12 @@ function renderProspectionResults() {
   const cityAltIdx = cityIdx < 0 ? getColumnIndex('city') : -1;
   const deptIdx = getColumnIndex('coordinates.deptcode');
   const postcodeIdx = getColumnIndex('coordinates.postcode');
+  const legalIdx = getColumnIndex('legal_status');
 
   if (!indexes.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 6;
+    cell.colSpan = 7;
     cell.textContent = 'Aucune prospection active pour ces critères.';
     row.appendChild(cell);
     prospectResultsBody.appendChild(row);
@@ -538,10 +610,12 @@ function renderProspectionResults() {
     const tr = document.createElement('tr');
     const deptValue = deptIdx >= 0 ? sanitizeDeptCode(row[deptIdx]) : sanitizeDeptCode(state.rowDepts[rowIndex]);
     const city = cityIdx >= 0 ? row[cityIdx] : cityAltIdx >= 0 ? row[cityAltIdx] : '';
+    const legalStatus = legalIdx >= 0 ? row[legalIdx] || '' : '';
 
     const cells = [
       nameIdx >= 0 ? row[nameIdx] || '' : `Fiche ${rowIndex + 1}`,
       deptValue || deriveDeptFromPostcode(postcodeIdx >= 0 ? row[postcodeIdx] : ''),
+      legalStatus,
       city || '',
       idxDate1 >= 0 ? row[idxDate1] || '' : '',
       idxDate2 >= 0 ? row[idxDate2] || '' : '',
@@ -569,6 +643,7 @@ function renderProspectionResults() {
 
 function applyProspectionFilters() {
   const { idxDate1, idxDate2, idxComments } = getProspectionFieldIndexes();
+  const legalIdx = getColumnIndex('legal_status');
   const baseIndexes = getActiveProspectionIndexes();
   const targetDept = sanitizeDeptCode(state.prospection.dept);
   const start1 = parseDate(state.prospection.date1Start);
@@ -576,11 +651,20 @@ function applyProspectionFilters() {
   const start2 = parseDate(state.prospection.date2Start);
   const end2 = parseDate(state.prospection.date2End);
   const commentTerm = (state.prospection.commentTerm || '').toLowerCase();
+  const statusFilters = state.prospection.statuses.map(s => s.toLowerCase());
 
   let indexes = baseIndexes;
 
   if (targetDept) {
     indexes = indexes.filter(i => state.rowDepts[i] === targetDept);
+  }
+
+  if (statusFilters.length) {
+    if (legalIdx < 0) {
+      indexes = [];
+    } else {
+      indexes = indexes.filter(i => statusFilters.includes(String(state.rows[i][legalIdx] || '').trim().toLowerCase()));
+    }
   }
 
   if (start1 || end1) {
@@ -678,17 +762,27 @@ function loadData(rows) {
   state.rows = rows.slice(1).map(r => padRow(r, state.headers.length));
   const deptIndex = getColumnIndex('coordinates.deptcode');
   const postcodeIndex = getColumnIndex('coordinates.postcode');
+  const legalIdx = getColumnIndex('legal_status');
+  const statusSet = new Set();
   state.rowDepts = state.rows.map(row =>
     sanitizeDeptCode(
       (deptIndex >= 0 ? row[deptIndex] : '') ||
         deriveDeptFromPostcode(postcodeIndex >= 0 ? row[postcodeIndex] : '')
     )
   );
+  if (legalIdx >= 0) {
+    state.rows.forEach(row => {
+      const value = String(row[legalIdx] || '').trim();
+      if (value) statusSet.add(value);
+    });
+  }
+  state.legalStatuses = Array.from(statusSet).sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
   buildForm(state.headers);
   state.currentIndex = 0;
   displayRecord(0);
   state.filters.dept = '';
   state.filters.terms = [];
+  state.filters.statuses = [];
   state.prospection = {
     dept: '',
     date1Start: '',
@@ -696,10 +790,12 @@ function loadData(rows) {
     date2Start: '',
     date2End: '',
     commentTerm: '',
+    statuses: [],
     filteredIndexes: [],
   };
   renderActiveTerms();
   buildDeptFilters();
+  renderStatusFilters();
   applyFilters();
   applyProspectionFilters();
   setStatus('CSV chargé avec succès.');
@@ -784,12 +880,14 @@ termInput.addEventListener('keydown', event => {
   }
 });
 
-  resetFiltersBtn.addEventListener('click', () => {
-    state.filters.dept = '';
-    state.filters.terms = [];
-    deptInput.value = '';
-    termInput.value = '';
+resetFiltersBtn.addEventListener('click', () => {
+  state.filters.dept = '';
+  state.filters.terms = [];
+  state.filters.statuses = [];
+  deptInput.value = '';
+  termInput.value = '';
   refreshDeptChips();
+  renderStatusFilters();
   renderActiveTerms();
   applyFilters();
 });
@@ -829,6 +927,7 @@ prospectResetFilters.addEventListener('click', () => {
     date2Start: '',
     date2End: '',
     commentTerm: '',
+    statuses: [],
   };
   prospectDeptFilter.value = '';
   prospectDate1Start.value = '';
@@ -836,6 +935,7 @@ prospectResetFilters.addEventListener('click', () => {
   prospectDate2Start.value = '';
   prospectDate2End.value = '';
   prospectCommentSearch.value = '';
+  renderStatusFilters();
   applyProspectionFilters();
 });
 
