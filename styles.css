@@ -583,26 +583,9 @@ h2 {
 }
 
 /* Ensure Statut légal labels remain legible on dark backgrounds */
-.eyebrow {
-  color: #ffffff !important;
-}
-
-#statusFilter .check-chip {
-  color: #ffffff !important;
-}
-
-#statusFilter .check-chip span,
-#statusFilter .check-chip svg,
-#statusFilter .check-chip *,
-#statusFilter .check-chip::before,
-#statusFilter .check-chip::after {
-  color: #ffffff !important;
-  fill: #ffffff !important;
-}
-
-#statusFilter .check-chip,
-#statusFilter .check-chip::after {
-  color: #ffffff !important;
+#statusFilter .check-chip:has(input:not(:checked)),
+#statusFilter .check-chip:has(input:not(:checked))::after {
+  color: var(--text) !important;
   opacity: 1 !important;
 }
 
