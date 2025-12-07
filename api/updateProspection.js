@@ -9,8 +9,8 @@ function columnLetter(index) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Méthode non autorisée' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
   try {
@@ -18,76 +18,70 @@ export default async function handler(req, res) {
     const sheetId = process.env.SHEET_ID;
 
     if (!apiKey || !sheetId) {
-      return res.status(500).json({ error: "Variables d'environnement manquantes" });
+      return res.status(500).json({ error: "Clés API manquantes" });
     }
 
-    const range = 'Base_ehpad';
+    const sheetName = "Base_ehpad"; // ⚠️ mettre EXACTEMENT le nom de ton onglet
 
-    const bodyPayload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-    const { rowIndex, date1, date2, commentaires } = bodyPayload;
+    const { rowIndex, date1, date2, commentaires } =
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
-    const parsedIndex = Number(rowIndex);
-    if (!Number.isInteger(parsedIndex) || parsedIndex < 0) {
-      return res.status(400).json({ error: 'Index de ligne invalide' });
+    const rowNumber = rowIndex + 2; // +1 header +1 index base 0
+
+    // lire les headers
+    const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}?key=${apiKey}`;
+    const headerRes = await fetch(headerUrl);
+    const headerJson = await headerRes.json();
+
+    const headers = headerJson.values[0];
+    const colCount = headers.length;
+
+    const idxDate1 = headers.indexOf("prospection.date1ercontact");
+    const idxDate2 = headers.indexOf("prospection.daterappel");
+    const idxComments = headers.indexOf("prospection.commentaires");
+
+    if (idxDate1 < 0 || idxDate2 < 0 || idxComments < 0) {
+      return res.status(400).json({ error: "Colonnes prospection introuvables" });
     }
 
-    const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}`;
+    // lire la ligne actuelle
+    const lastColLetter = columnLetter(colCount - 1);
+    const range = `${sheetName}!A${rowNumber}:${lastColLetter}${rowNumber}`;
 
-    const headerUrl = `${baseUrl}/values/${encodeURIComponent(range)}?key=${apiKey}`;
-    const headerResponse = await fetch(headerUrl);
-    if (!headerResponse.ok) {
-      const text = await headerResponse.text();
-      throw new Error(`Lecture des headers échouée (${headerResponse.status}): ${text}`);
-    }
-    const headerData = await headerResponse.json();
+    const rowUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`;
+    const rowRes = await fetch(rowUrl);
+    const rowJson = await rowRes.json();
 
-    const headers = headerData.values?.[0] || [];
-    const idxDate1 = headers.indexOf('prospection.date1ercontact');
-    const idxDate2 = headers.indexOf('prospection.daterappel');
-    const idxComments = headers.indexOf('prospection.commentaires');
+    const row = new Array(colCount).fill("");
+    (rowJson.values?.[0] || []).forEach((cell, i) => {
+      row[i] = cell;
+    });
 
-    if (idxDate1 < 0 && idxDate2 < 0 && idxComments < 0) {
-      return res.status(400).json({ error: 'Colonnes de prospection introuvables' });
-    }
+    // mettre à jour la ligne
+    row[idxDate1] = date1 || "";
+    row[idxDate2] = date2 || "";
+    row[idxComments] = commentaires || "";
 
-    const rowNumber = parsedIndex + 2;
-    const lastColumnLetter = columnLetter(Math.max(headers.length - 1, 0));
-    const rowRange = `${range}!A${rowNumber}:${lastColumnLetter}${rowNumber}`;
+    const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED&key=${apiKey}`;
 
-    const rowUrl = `${baseUrl}/values/${encodeURIComponent(rowRange)}?key=${apiKey}`;
-    const rowResponse = await fetch(rowUrl);
-    if (!rowResponse.ok) {
-      const text = await rowResponse.text();
-      throw new Error(`Lecture de la ligne échouée (${rowResponse.status}): ${text}`);
-    }
-    const rowData = await rowResponse.json();
-    const currentRow = Array.from({ length: headers.length }, (_, i) => rowData.values?.[0]?.[i] || '');
-
-    if (idxDate1 >= 0) currentRow[idxDate1] = date1 || '';
-    if (idxDate2 >= 0) currentRow[idxDate2] = date2 || '';
-    if (idxComments >= 0) currentRow[idxComments] = commentaires || '';
-
-    const updateRange = rowRange;
-    const writeUrl = `${baseUrl}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED&key=${apiKey}`;
-
-    const updateResponse = await fetch(writeUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+    const updateRes = await fetch(updateUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        range: updateRange,
-        majorDimension: 'ROWS',
-        values: [currentRow],
+        range,
+        majorDimension: "ROWS",
+        values: [row],
       }),
     });
 
-    if (!updateResponse.ok) {
-      const text = await updateResponse.text();
-      throw new Error(`Écriture Google Sheets échouée (${updateResponse.status}): ${text}`);
+    if (!updateRes.ok) {
+      const txt = await updateRes.text();
+      throw new Error("Google error: " + txt);
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Erreur API', details: err.message });
+    console.error("API ERROR:", err);
+    return res.status(500).json({ error: "Erreur API", details: err.message });
   }
 }
