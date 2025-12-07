@@ -5,6 +5,7 @@ const state = {
   inputs: [],
   isDirty: false,
   departments: [],
+  deptRange: 'range1',
   rowDepts: [],
   filters: {
     dept: '',
@@ -44,6 +45,7 @@ const saveProspectionBtn = document.getElementById('saveProspectionBtn');
 const deptInput = document.getElementById('deptInput');
 const deptOptions = document.getElementById('deptOptions');
 const deptChips = document.getElementById('deptChips');
+const deptRangeButtons = Array.from(document.querySelectorAll('.subtab-btn'));
 const clearDeptBtn = document.getElementById('clearDeptBtn');
 const termInput = document.getElementById('termInput');
 const addTermBtn = document.getElementById('addTermBtn');
@@ -60,6 +62,12 @@ function normalizeDeptCode(value = '') {
   const raw = String(value).trim().toUpperCase();
   const match = raw.match(/^0*(\d{2,3}|2A|2B)$/);
   return match ? match[1].replace(/^0+/, '') || match[1] : raw;
+}
+
+function sanitizeDeptCode(value = '') {
+  const normalized = normalizeDeptCode(value);
+  if (normalized === '0' || normalized === '13.5') return '';
+  return normalized;
 }
 
 function deriveDeptFromPostcode(postcode = '') {
@@ -191,15 +199,17 @@ function loadProspectionFields(row) {
 
 function updateProspectionContext(row, index) {
   const titleIdx = getColumnIndex('title');
-  const cityIdx = getColumnIndex('city');
-  const postcodeIdx = getColumnIndex('postcode');
+  const cityIdx = getColumnIndex('coordinates.city');
+  const cityAltIdx = cityIdx < 0 ? getColumnIndex('city') : -1;
+  const postcodeIdx = getColumnIndex('coordinates.postcode');
+  const postcodeAltIdx = postcodeIdx < 0 ? getColumnIndex('postcode') : -1;
   const deptIdx = getColumnIndex('coordinates.deptcode');
 
   const title = titleIdx >= 0 ? row[titleIdx] : '';
-  const city = cityIdx >= 0 ? row[cityIdx] : '';
-  const postcode = postcodeIdx >= 0 ? row[postcodeIdx] : '';
-  const deptValue = deptIdx >= 0 ? normalizeDeptCode(row[deptIdx]) : '';
-  const deptFallback = normalizeDeptCode(state.rowDepts[index] || deriveDeptFromPostcode(postcode));
+  const city = cityIdx >= 0 ? row[cityIdx] : cityAltIdx >= 0 ? row[cityAltIdx] : '';
+  const postcode = postcodeIdx >= 0 ? row[postcodeIdx] : postcodeAltIdx >= 0 ? row[postcodeAltIdx] : '';
+  const deptValue = deptIdx >= 0 ? sanitizeDeptCode(row[deptIdx]) : '';
+  const deptFallback = sanitizeDeptCode(state.rowDepts[index] || deriveDeptFromPostcode(postcode));
   const dept = deptValue || deptFallback;
 
   prospectOrgName.textContent = title || 'Sans titre';
@@ -271,6 +281,32 @@ function renderDeptChips(departments) {
   });
 }
 
+function refreshDeptChips() {
+  renderDeptChips(filterDepartmentsByRange(state.deptRange));
+}
+
+function filterDepartmentsByRange(rangeId) {
+  const ranges = {
+    range1: [1, 33],
+    range2: [34, 66],
+    range3: [67, 98],
+  };
+  const [start, end] = ranges[rangeId] || ranges.range1;
+  return state.departments.filter(code => {
+    const numeric = parseInt(code, 10);
+    if (!Number.isNaN(numeric)) {
+      if (numeric >= 970 && numeric <= 989) {
+        return rangeId === 'range3';
+      }
+      return numeric >= start && numeric <= end;
+    }
+    if (code === '2A' || code === '2B') {
+      return start <= 2 && end >= 2;
+    }
+    return false;
+  });
+}
+
 function buildDeptFilters() {
   const uniqueDepts = Array.from(new Set(state.rowDepts.filter(Boolean)))
     .sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
@@ -284,7 +320,7 @@ function buildDeptFilters() {
     deptOptions.appendChild(option);
   });
 
-  renderDeptChips(state.departments.slice(0, 30));
+  refreshDeptChips();
 }
 
 function renderActiveTerms() {
@@ -362,7 +398,7 @@ function renderResultsTable() {
 }
 
 function applyFilters() {
-  const targetDept = normalizeDeptCode(state.filters.dept);
+  const targetDept = sanitizeDeptCode(state.filters.dept);
   const terms = state.filters.terms.map(t => t.toLowerCase());
   let indexes = state.rows.map((_, i) => i);
 
@@ -456,7 +492,7 @@ function loadData(rows) {
   const deptIndex = getColumnIndex('coordinates.deptcode');
   const postcodeIndex = getColumnIndex('coordinates.postcode');
   state.rowDepts = state.rows.map(row =>
-    normalizeDeptCode(
+    sanitizeDeptCode(
       (deptIndex >= 0 ? row[deptIndex] : '') ||
         deriveDeptFromPostcode(postcodeIndex >= 0 ? row[postcodeIndex] : '')
     )
@@ -508,16 +544,24 @@ tabButtons.forEach(btn => {
 
 saveProspectionBtn.addEventListener('click', saveProspection);
 
+deptRangeButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.deptRange = btn.dataset.range;
+    deptRangeButtons.forEach(b => b.classList.toggle('is-active', b === btn));
+    refreshDeptChips();
+  });
+});
+
 deptInput.addEventListener('input', () => {
   state.filters.dept = deptInput.value.trim();
-  renderDeptChips(state.departments.slice(0, 30));
+  refreshDeptChips();
   applyFilters();
 });
 
 clearDeptBtn.addEventListener('click', () => {
   state.filters.dept = '';
   deptInput.value = '';
-  renderDeptChips(state.departments.slice(0, 30));
+  refreshDeptChips();
   applyFilters();
 });
 
@@ -534,7 +578,7 @@ resetFiltersBtn.addEventListener('click', () => {
   state.filters.terms = [];
   deptInput.value = '';
   termInput.value = '';
-  renderDeptChips(state.departments.slice(0, 30));
+  refreshDeptChips();
   renderActiveTerms();
   applyFilters();
 });
