@@ -18,6 +18,10 @@ const fieldsContainer = document.getElementById('fieldsContainer');
 const statusMessage = document.getElementById('statusMessage');
 const recordTitle = document.getElementById('recordTitle');
 const recordId = document.getElementById('recordId');
+const prospectOrgName = document.getElementById('prospectOrgName');
+const prospectCity = document.getElementById('prospectCity');
+const prospectPostcode = document.getElementById('prospectPostcode');
+const prospectDept = document.getElementById('prospectDept');
 const currentIndexEl = document.getElementById('currentIndex');
 const totalCountEl = document.getElementById('totalCount');
 const prevBtn = document.getElementById('prevBtn');
@@ -185,6 +189,25 @@ function loadProspectionFields(row) {
   prospectionCommentaires.value = idxComments >= 0 ? row[idxComments] || '' : '';
 }
 
+function updateProspectionContext(row, index) {
+  const titleIdx = getColumnIndex('title');
+  const cityIdx = getColumnIndex('city');
+  const postcodeIdx = getColumnIndex('postcode');
+  const deptIdx = getColumnIndex('coordinates.deptcode');
+
+  const title = titleIdx >= 0 ? row[titleIdx] : '';
+  const city = cityIdx >= 0 ? row[cityIdx] : '';
+  const postcode = postcodeIdx >= 0 ? row[postcodeIdx] : '';
+  const deptValue = deptIdx >= 0 ? normalizeDeptCode(row[deptIdx]) : '';
+  const deptFallback = normalizeDeptCode(state.rowDepts[index] || deriveDeptFromPostcode(postcode));
+  const dept = deptValue || deptFallback;
+
+  prospectOrgName.textContent = title || 'Sans titre';
+  prospectCity.textContent = city || 'Ville inconnue';
+  prospectPostcode.textContent = postcode ? `CP ${postcode}` : 'Code postal manquant';
+  prospectDept.textContent = dept || 'Département ?';
+}
+
 function displayRecord(index) {
   const row = padRow(state.rows[index] || [], state.headers.length);
   state.inputs.forEach((input, idx) => {
@@ -192,6 +215,7 @@ function displayRecord(index) {
   });
 
   loadProspectionFields(row);
+  updateProspectionContext(row, index);
 
   const titleIdx = state.headers.findIndex(h => h.toLowerCase() === 'title');
   recordTitle.textContent = titleIdx >= 0 ? row[titleIdx] || 'Sans titre' : `Fiche ${index + 1}`;
