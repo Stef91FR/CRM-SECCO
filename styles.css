@@ -563,7 +563,8 @@ h2 {
 }
 
 .check-chip span {
-  color: #d8ccff;
+  color: #e0e0ff;
+  opacity: 1;
 }
 
 .check-chip:hover {
