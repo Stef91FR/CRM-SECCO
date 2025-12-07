@@ -1,19 +1,39 @@
-import { google } from 'googleapis';
-
 export default async function handler(req, res) {
   try {
-    const sheets = google.sheets({ version: "v4", auth: process.env.GOOGLE_API_KEY });
+    const SHEET_ID = process.env.SHEET_ID;
+    const API_KEY = process.env.GOOGLE_API_KEY;
 
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SHEET_ID,
-      range: "Feuille1",   // nom de la première feuille
+    if (!SHEET_ID || !API_KEY) {
+      return res.status(500).json({
+        error: "Missing Google Sheets environment variables."
+      });
+    }
+
+    // IMPORTANT : remplacer Feuille1 par le nom EXACT de ton onglet Google Sheet !
+    const range = "Base_ehpad";  
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(500).json({
+        error: "Google Sheets API error",
+        details: text
+      });
+    }
+
+    const data = await response.json();
+
+    return res.status(200).json({
+      data: data.values || []
     });
-
-    const rows = response.data.values || [];
-
-    res.status(200).json({ data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Unable to fetch Google Sheets data." });
+    return res.status(500).json({
+      error: "Server error",
+      details: err.message
+    });
   }
 }
