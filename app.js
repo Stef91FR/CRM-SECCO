@@ -13,6 +13,15 @@ const state = {
     filteredIndexes: [],
     selectedResult: -1,
   },
+  prospection: {
+    dept: '',
+    date1Start: '',
+    date1End: '',
+    date2Start: '',
+    date2End: '',
+    commentTerm: '',
+    filteredIndexes: [],
+  },
 };
 
 const fieldsContainer = document.getElementById('fieldsContainer');
@@ -36,11 +45,29 @@ const jumpBtn = document.getElementById('jumpBtn');
 const fileInput = document.getElementById('fileInput');
 const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
 const tabContents = Array.from(document.querySelectorAll('.tab-content'));
+const prospectSubtabButtons = Array.from(document.querySelectorAll('[data-prospect-pane]'));
+const prospectPanes = Array.from(document.querySelectorAll('.prospect-pane'));
 
 const prospectionDate1 = document.getElementById('prospectionDate1');
 const prospectionDate2 = document.getElementById('prospectionDate2');
 const prospectionCommentaires = document.getElementById('prospectionCommentaires');
 const saveProspectionBtn = document.getElementById('saveProspectionBtn');
+const reminderShortcuts = Array.from(document.querySelectorAll('[data-reminder-offset]'));
+
+const prospectDeptFilter = document.getElementById('prospectDeptFilter');
+const prospectDeptOptions = document.getElementById('prospectDeptOptions');
+const prospectClearDept = document.getElementById('prospectClearDept');
+const prospectDate1Start = document.getElementById('prospectDate1Start');
+const prospectDate1End = document.getElementById('prospectDate1End');
+const prospectDate2Start = document.getElementById('prospectDate2Start');
+const prospectDate2End = document.getElementById('prospectDate2End');
+const prospectCommentSearch = document.getElementById('prospectCommentSearch');
+const prospectResetFilters = document.getElementById('prospectResetFilters');
+const prospectFilterStatus = document.getElementById('prospectFilterStatus');
+const prospectResultsTitle = document.getElementById('prospectResultsTitle');
+const prospectResultsCount = document.getElementById('prospectResultsCount');
+const prospectResultsBody = document.querySelector('#prospectResultsTable tbody');
+const prospectResultsWrapper = document.getElementById('prospectResultsWrapper');
 
 const deptInput = document.getElementById('deptInput');
 const deptOptions = document.getElementById('deptOptions');
@@ -96,6 +123,17 @@ function switchTab(targetId) {
   });
 }
 
+function switchProspectPane(targetId) {
+  prospectSubtabButtons.forEach(btn => {
+    const isActive = btn.dataset.prospectPane === targetId;
+    btn.classList.toggle('is-active', isActive);
+  });
+  prospectPanes.forEach(pane => {
+    const isActive = pane.id === targetId;
+    pane.classList.toggle('is-active', isActive);
+  });
+}
+
 function parseCSV(text) {
   const rows = [];
   let current = '';
@@ -147,6 +185,28 @@ function toCsvValue(value = '') {
 function toCsvText(headers, rows) {
   const allRows = [headers, ...rows];
   return allRows.map(r => r.map(v => toCsvValue(v || '')).join(',')).join('\n');
+}
+
+function parseDate(value) {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isWithinRange(value, start, end) {
+  const date = parseDate(value);
+  if (!date) return false;
+  if (start && date < start) return false;
+  if (end && date > end) return false;
+  return true;
+}
+
+function formatDateInputValue(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const normalized = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return normalized.toISOString().slice(0, 10);
 }
 
 function getColumnIndex(name) {
@@ -321,6 +381,7 @@ function buildDeptFilters() {
   });
 
   refreshDeptChips();
+  populateProspectDeptOptions();
 }
 
 function renderActiveTerms() {
@@ -418,6 +479,131 @@ function applyFilters() {
   renderResultsTable();
 }
 
+function getProspectionFieldIndexes() {
+  return {
+    idxDate1: getColumnIndex('prospection.date1ercontact'),
+    idxDate2: getColumnIndex('prospection.daterappel'),
+    idxComments: getColumnIndex('prospection.commentaires'),
+  };
+}
+
+function getActiveProspectionIndexes() {
+  const { idxDate1, idxDate2, idxComments } = getProspectionFieldIndexes();
+  if (idxDate1 < 0 && idxDate2 < 0 && idxComments < 0) return [];
+  return state.rows
+    .map((row, i) => ({ row, i }))
+    .filter(({ row }) => {
+      const values = [idxDate1, idxDate2, idxComments]
+        .map(idx => (idx >= 0 ? row[idx] : ''))
+        .filter(Boolean)
+        .map(v => String(v).trim());
+      return values.some(Boolean);
+    })
+    .map(item => item.i);
+}
+
+function populateProspectDeptOptions() {
+  prospectDeptOptions.innerHTML = '';
+  state.departments.forEach(code => {
+    const option = document.createElement('option');
+    option.value = code;
+    prospectDeptOptions.appendChild(option);
+  });
+}
+
+function renderProspectionResults() {
+  prospectResultsBody.innerHTML = '';
+  const indexes = state.prospection.filteredIndexes;
+  const { idxDate1, idxDate2, idxComments } = getProspectionFieldIndexes();
+  const nameIdx = getColumnIndex('title');
+  const cityIdx = getColumnIndex('coordinates.city');
+  const cityAltIdx = cityIdx < 0 ? getColumnIndex('city') : -1;
+  const deptIdx = getColumnIndex('coordinates.deptcode');
+  const postcodeIdx = getColumnIndex('coordinates.postcode');
+
+  if (!indexes.length) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 6;
+    cell.textContent = 'Aucune prospection active pour ces critères.';
+    row.appendChild(cell);
+    prospectResultsBody.appendChild(row);
+    prospectResultsTitle.textContent = 'Aucun résultat';
+    prospectResultsCount.textContent = formatResultText(0);
+    return;
+  }
+
+  indexes.forEach(rowIndex => {
+    const row = state.rows[rowIndex] || [];
+    const tr = document.createElement('tr');
+    const deptValue = deptIdx >= 0 ? sanitizeDeptCode(row[deptIdx]) : sanitizeDeptCode(state.rowDepts[rowIndex]);
+    const city = cityIdx >= 0 ? row[cityIdx] : cityAltIdx >= 0 ? row[cityAltIdx] : '';
+
+    const cells = [
+      nameIdx >= 0 ? row[nameIdx] || '' : `Fiche ${rowIndex + 1}`,
+      deptValue || deriveDeptFromPostcode(postcodeIdx >= 0 ? row[postcodeIdx] : ''),
+      city || '',
+      idxDate1 >= 0 ? row[idxDate1] || '' : '',
+      idxDate2 >= 0 ? row[idxDate2] || '' : '',
+      idxComments >= 0 ? row[idxComments] || '' : '',
+    ];
+
+    cells.forEach(value => {
+      const td = document.createElement('td');
+      td.textContent = value || '';
+      tr.appendChild(td);
+    });
+
+    tr.addEventListener('click', () => {
+      goTo(rowIndex);
+      switchTab('prospectionTab');
+      switchProspectPane('prospectEntryPane');
+    });
+
+    prospectResultsBody.appendChild(tr);
+  });
+
+  prospectResultsTitle.textContent = 'Prospections filtrées';
+  prospectResultsCount.textContent = formatResultText(indexes.length);
+}
+
+function applyProspectionFilters() {
+  const { idxDate1, idxDate2, idxComments } = getProspectionFieldIndexes();
+  const baseIndexes = getActiveProspectionIndexes();
+  const targetDept = sanitizeDeptCode(state.prospection.dept);
+  const start1 = parseDate(state.prospection.date1Start);
+  const end1 = parseDate(state.prospection.date1End);
+  const start2 = parseDate(state.prospection.date2Start);
+  const end2 = parseDate(state.prospection.date2End);
+  const commentTerm = (state.prospection.commentTerm || '').toLowerCase();
+
+  let indexes = baseIndexes;
+
+  if (targetDept) {
+    indexes = indexes.filter(i => state.rowDepts[i] === targetDept);
+  }
+
+  if (start1 || end1) {
+    indexes = indexes.filter(i => idxDate1 >= 0 && isWithinRange(state.rows[i][idxDate1], start1, end1));
+  }
+
+  if (start2 || end2) {
+    indexes = indexes.filter(i => idxDate2 >= 0 && isWithinRange(state.rows[i][idxDate2], start2, end2));
+  }
+
+  if (commentTerm) {
+    indexes = indexes.filter(i =>
+      idxComments >= 0 && String(state.rows[i][idxComments] || '').toLowerCase().includes(commentTerm)
+    );
+  }
+
+  state.prospection.filteredIndexes = indexes;
+  prospectFilterStatus.textContent = `${indexes.length} prospection${indexes.length > 1 ? 's' : ''} active${
+    indexes.length > 1 ? 's' : ''
+  }`;
+  renderProspectionResults();
+}
+
 async function saveProspection() {
   const rowIndex = state.currentIndex;
   if (rowIndex == null || rowIndex < 0 || rowIndex >= state.rows.length) {
@@ -461,6 +647,7 @@ async function saveProspection() {
       }
 
       state.rows[rowIndex] = row;
+      applyProspectionFilters();
       setStatus('Prospection mise à jour.', 'ok');
     } else {
       setStatus('Erreur mise à jour prospection.', 'warning');
@@ -502,9 +689,19 @@ function loadData(rows) {
   displayRecord(0);
   state.filters.dept = '';
   state.filters.terms = [];
+  state.prospection = {
+    dept: '',
+    date1Start: '',
+    date1End: '',
+    date2Start: '',
+    date2End: '',
+    commentTerm: '',
+    filteredIndexes: [],
+  };
   renderActiveTerms();
   buildDeptFilters();
   applyFilters();
+  applyProspectionFilters();
   setStatus('CSV chargé avec succès.');
 }
 
@@ -542,6 +739,20 @@ tabButtons.forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
 
+prospectSubtabButtons.forEach(btn => {
+  btn.addEventListener('click', () => switchProspectPane(btn.dataset.prospectPane));
+});
+
+reminderShortcuts.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const offset = Number(btn.dataset.reminderOffset);
+    if (Number.isNaN(offset)) return;
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + offset);
+    prospectionDate2.value = formatDateInputValue(targetDate);
+  });
+});
+
 saveProspectionBtn.addEventListener('click', saveProspection);
 
 deptRangeButtons.forEach(btn => {
@@ -573,14 +784,59 @@ termInput.addEventListener('keydown', event => {
   }
 });
 
-resetFiltersBtn.addEventListener('click', () => {
-  state.filters.dept = '';
-  state.filters.terms = [];
-  deptInput.value = '';
-  termInput.value = '';
+  resetFiltersBtn.addEventListener('click', () => {
+    state.filters.dept = '';
+    state.filters.terms = [];
+    deptInput.value = '';
+    termInput.value = '';
   refreshDeptChips();
   renderActiveTerms();
   applyFilters();
+});
+
+prospectDeptFilter.addEventListener('input', () => {
+  state.prospection.dept = prospectDeptFilter.value.trim();
+  applyProspectionFilters();
+});
+
+prospectClearDept.addEventListener('click', () => {
+  state.prospection.dept = '';
+  prospectDeptFilter.value = '';
+  applyProspectionFilters();
+});
+
+[prospectDate1Start, prospectDate1End, prospectDate2Start, prospectDate2End].forEach(input => {
+  input.addEventListener('change', () => {
+    state.prospection.date1Start = prospectDate1Start.value;
+    state.prospection.date1End = prospectDate1End.value;
+    state.prospection.date2Start = prospectDate2Start.value;
+    state.prospection.date2End = prospectDate2End.value;
+    applyProspectionFilters();
+  });
+});
+
+prospectCommentSearch.addEventListener('input', () => {
+  state.prospection.commentTerm = prospectCommentSearch.value.trim();
+  applyProspectionFilters();
+});
+
+prospectResetFilters.addEventListener('click', () => {
+  state.prospection = {
+    ...state.prospection,
+    dept: '',
+    date1Start: '',
+    date1End: '',
+    date2Start: '',
+    date2End: '',
+    commentTerm: '',
+  };
+  prospectDeptFilter.value = '';
+  prospectDate1Start.value = '';
+  prospectDate1End.value = '';
+  prospectDate2Start.value = '';
+  prospectDate2End.value = '';
+  prospectCommentSearch.value = '';
+  applyProspectionFilters();
 });
 
 resultsWrapper.addEventListener('keydown', event => {

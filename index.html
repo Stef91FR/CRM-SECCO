@@ -133,39 +133,117 @@
         <p class="lede">Visualisez le contexte de la fiche puis notez vos échanges et prochaines étapes.</p>
       </section>
 
-      <section class="prospection-card">
-        <div class="prospection-header">
-          <div>
-            <p class="eyebrow">Fiche en cours</p>
-            <h2 id="prospectOrgName">Sélectionnez une fiche</h2>
-            <div class="prospection-meta">
-              <span id="prospectCity" class="pill">Ville</span>
-              <span id="prospectPostcode" class="pill">Code postal</span>
-              <span class="pill" id="prospectDept">Département</span>
+      <div class="prospect-subtabs">
+        <button class="subtab-btn is-active" data-prospect-pane="prospectEntryPane">Saisie</button>
+        <button class="subtab-btn" data-prospect-pane="prospectSearchPane">Recherches sur prospections actives</button>
+      </div>
+
+      <div id="prospectEntryPane" class="prospect-pane is-active">
+        <section class="prospection-card">
+          <div class="prospection-header">
+            <div>
+              <p class="eyebrow">Fiche en cours</p>
+              <h2 id="prospectOrgName">Sélectionnez une fiche</h2>
+              <div class="prospection-meta">
+                <span id="prospectCity" class="pill">Ville</span>
+                <span id="prospectPostcode" class="pill">Code postal</span>
+                <span class="pill" id="prospectDept">Département</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="prospection-grid">
-          <div>
-            <label for="prospectionDate1">Date 1er contact</label>
-            <input type="date" id="prospectionDate1" class="input" />
+          <div class="prospection-grid">
+            <div>
+              <label for="prospectionDate1">Date 1er contact</label>
+              <input type="date" id="prospectionDate1" class="input" />
+            </div>
+            <div>
+              <div class="label-row">
+                <label for="prospectionDate2">Date de rappel</label>
+                <div class="quick-dates">
+                  <button type="button" class="pill pill--ghost" data-reminder-offset="7">+1 semaine</button>
+                  <button type="button" class="pill pill--ghost" data-reminder-offset="14">+2 semaines</button>
+                  <button type="button" class="pill pill--ghost" data-reminder-offset="21">+3 semaines</button>
+                </div>
+              </div>
+              <input type="date" id="prospectionDate2" class="input" />
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <label for="prospectionCommentaires">Commentaires</label>
+              <textarea id="prospectionCommentaires" rows="7"></textarea>
+            </div>
           </div>
-          <div>
-            <label for="prospectionDate2">Date de rappel</label>
-            <input type="date" id="prospectionDate2" class="input" />
-          </div>
-          <div style="grid-column: 1 / -1;">
-            <label for="prospectionCommentaires">Commentaires</label>
-            <textarea id="prospectionCommentaires" rows="4"></textarea>
-          </div>
-        </div>
 
-        <div class="prospection-actions">
-          <button class="btn btn--primary" id="saveProspectionBtn">Enregistrer la prospection</button>
-        </div>
-        <p class="prospection-note">Les dates sont enregistrées directement dans la feuille Google Sheets (Base_ehpad) sur la ligne correspondante.</p>
-      </section>
+          <div class="prospection-actions">
+            <button class="btn btn--primary" id="saveProspectionBtn">Enregistrer la prospection</button>
+          </div>
+          <p class="prospection-note">Les dates sont enregistrées directement dans la feuille Google Sheets (Base_ehpad) sur la ligne correspondante.</p>
+        </section>
+      </div>
+
+      <div id="prospectSearchPane" class="prospect-pane">
+        <section class="panel">
+          <div class="panel__row panel__row--wrap">
+            <div class="filter-block">
+              <p class="eyebrow">Département</p>
+              <div class="inline">
+                <input id="prospectDeptFilter" class="input" list="prospectDeptOptions" placeholder="Ex : 33, 75, 974" />
+                <datalist id="prospectDeptOptions"></datalist>
+                <button id="prospectClearDept" class="btn btn--ghost">Effacer</button>
+              </div>
+            </div>
+            <div class="filter-block">
+              <p class="eyebrow">Date 1er contact</p>
+              <div class="inline inline--tight">
+                <input type="date" id="prospectDate1Start" class="input" />
+                <span class="muted">à</span>
+                <input type="date" id="prospectDate1End" class="input" />
+              </div>
+            </div>
+            <div class="filter-block">
+              <p class="eyebrow">Date de rappel</p>
+              <div class="inline inline--tight">
+                <input type="date" id="prospectDate2Start" class="input" />
+                <span class="muted">à</span>
+                <input type="date" id="prospectDate2End" class="input" />
+              </div>
+            </div>
+            <div class="filter-block">
+              <p class="eyebrow">Commentaires contient</p>
+              <div class="inline">
+                <input id="prospectCommentSearch" class="input" type="search" placeholder="Mot clé commentaire" />
+                <button id="prospectResetFilters" class="btn">Réinitialiser</button>
+              </div>
+            </div>
+          </div>
+          <p class="helper" id="prospectFilterStatus">Filtres appliqués sur les prospections actives.</p>
+        </section>
+
+        <section class="card">
+          <div class="card__title">
+            <div>
+              <p class="eyebrow">Prospections actives</p>
+              <h2 id="prospectResultsTitle">Une des colonnes prospection doit être renseignée</h2>
+            </div>
+            <div class="pill" id="prospectResultsCount">0 résultat</div>
+          </div>
+          <div class="table-wrapper" tabindex="0" id="prospectResultsWrapper">
+            <table id="prospectResultsTable">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Département</th>
+                  <th>Ville</th>
+                  <th>1er contact</th>
+                  <th>Rappel</th>
+                  <th>Commentaires</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 
