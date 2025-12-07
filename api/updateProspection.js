@@ -3,18 +3,19 @@ import { google } from 'googleapis';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
-    }
+  }
 
   try {
     const sheetId = process.env.SHEET_ID;
-    const serviceAccount = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 
-    if (!sheetId || !serviceAccount) {
-      return res.status(500).json({ error: 'Variables manquantes' });
+    if (!sheetId || !serviceAccountJson) {
+      return res.status(500).json({ error: "Variables d'environnement manquantes" });
     }
 
-    // ===== 1) Authentification compte de service =====
-    const credentials = JSON.parse(serviceAccount);
+    // Authentification Service Account
+    const credentials = JSON.parse(serviceAccountJson);
+
     const auth = new google.auth.JWT(
       credentials.client_email,
       null,
@@ -24,54 +25,53 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // ===== 2) On récupère les données reçues =====
-    const { rowIndex, date1, date2, commentaires } = req.body;
+    // Récupération du payload
+    const { rowIndex, date1, date2, commentaires } =
+      typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 
-    const parsedIndex = Number(rowIndex);
-    if (!Number.isInteger(parsedIndex) || parsedIndex < 0) {
+    const numRow = Number(rowIndex) + 2; // Ligne réelle (1 = header)
+    if (!Number.isFinite(numRow) || numRow < 2) {
       return res.status(400).json({ error: 'Index de ligne invalide' });
     }
 
-    const range = 'Base_ehpad';
+    const sheetName = 'Base_ehpad'; // ⚠️ Nom exact de ton onglet
 
-    // ===== 3) Lecture de la ligne existante pour modification =====
+    // Lecture des en-têtes
     const headerResult = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `${range}!1:1`,
+      range: `${sheetName}!1:1`
     });
 
     const headers = headerResult.data.values?.[0] || [];
 
-    const idxDate1 = headers.indexOf('prospection.date1ercontact');
-    const idxDate2 = headers.indexOf('prospection.daterappel');
-    const idxComments = headers.indexOf('prospection.commentaires');
+    const idx1 = headers.indexOf('prospection.date1ercontact');
+    const idx2 = headers.indexOf('prospection.daterappel');
+    const idx3 = headers.indexOf('prospection.commentaires');
 
-    if (idxDate1 < 0 && idxDate2 < 0 && idxComments < 0) {
-      return res.status(400).json({ error: "Colonnes de prospection absentes" });
+    if (idx1 < 0 || idx2 < 0 || idx3 < 0) {
+      return res.status(400).json({ error: 'Colonnes prospection introuvables' });
     }
 
-    const rowNumber = parsedIndex + 2; // ligne réelle dans sheet (hors header)
-
+    // Lecture de la ligne actuelle
     const rowResult = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `${range}!${rowNumber}:${rowNumber}`,
+      range: `${sheetName}!${numRow}:${numRow}`
     });
 
-    const currentRow = rowResult.data.values?.[0] || [];
-    while (currentRow.length < headers.length) currentRow.push('');
+    const row = rowResult.data.values?.[0] || [];
+    while (row.length < headers.length) row.push('');
 
-    if (idxDate1 >= 0) currentRow[idxDate1] = date1 || '';
-    if (idxDate2 >= 0) currentRow[idxDate2] = date2 || '';
-    if (idxComments >= 0) currentRow[idxComments] = commentaires || '';
+    // Modification
+    row[idx1] = date1 || '';
+    row[idx2] = date2 || '';
+    row[idx3] = commentaires || '';
 
-    // ===== 4) Mise à jour =====
+    // Écriture
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
-      range: `${range}!${rowNumber}:${rowNumber}`,
+      range: `${sheetName}!${numRow}:${numRow}`,
       valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [currentRow],
-      },
+      requestBody: { values: [row] }
     });
 
     return res.status(200).json({ success: true });
