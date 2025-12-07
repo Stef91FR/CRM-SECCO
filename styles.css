@@ -588,14 +588,22 @@ h2 {
 }
 
 #statusFilter .check-chip {
-  color: #e0e0e0 !important;
+  color: #ffffff !important;
 }
 
 #statusFilter .check-chip span,
 #statusFilter .check-chip svg,
-#statusFilter .check-chip * {
-  color: #e0e0e0 !important;
-  fill: #e0e0e0 !important;
+#statusFilter .check-chip *,
+#statusFilter .check-chip::before,
+#statusFilter .check-chip::after {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+#statusFilter .check-chip,
+#statusFilter .check-chip::after {
+  color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 #statusFilter .check-chip input:checked + span {
