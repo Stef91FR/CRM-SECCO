@@ -6,22 +6,233 @@
   <title>Base EHPAD</title>
   <script>
     tailwind.config = {
-      darkMode: 'class'
+      darkMode: 'class',
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" integrity="sha512-qbDFm2Ny5SE6DF04bWXxUCBkKjeUMsOkYj6SuxUXk3p2ySBxQcbXcyhuJYbKW/6pUipW2zLMsWyNb7WLOyYQrw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css"
+    integrity="sha512-qbDFm2Ny5SE6DF04bWXxUCBkKjeUMsOkYj6SuxUXk3p2ySBxQcbXcyhuJYbKW/6pUipW2zLMsWyNb7WLOyYQrw=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-100">
   <div class="min-h-screen flex flex-col">
     <header class="bg-slate-800 border-b border-slate-700 shadow-sm">
-      <div class="max-w-5xl mx-auto px-6 py-4">
+      <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <h1 class="text-2xl font-semibold tracking-tight">Base EHPAD</h1>
+        <div class="flex items-center gap-3 text-sm">
+          <span class="font-semibold">Fiches</span>
+          <span class="bg-slate-700 px-2 py-1 rounded text-slate-50">
+            <span id="currentIndex">0</span> / <span id="totalCount">0</span>
+          </span>
+        </div>
       </div>
     </header>
-    <main id="app" class="flex-1 max-w-5xl mx-auto w-full px-6 py-8"></main>
+
+    <main id="app" class="flex-1 max-w-6xl mx-auto w-full px-6 py-8 space-y-6">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-lg p-4">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <button class="tab-btn is-active btn" data-tab="ficheTab">Consultation</button>
+          <button class="tab-btn btn" data-tab="triTab">Recherche</button>
+          <button class="tab-btn btn" data-tab="prospectionTab">Edition</button>
+        </div>
+
+        <section id="ficheTab" class="tab-content is-active space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-2">
+              <div class="text-sm text-slate-400">Fiche en cours</div>
+              <div class="text-lg font-semibold" id="recordTitle">Aucune fiche</div>
+              <div class="text-slate-300" id="recordId">#0</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-2">
+              <div class="text-sm text-slate-400">Contexte</div>
+              <div class="font-semibold" id="prospectOrgName">—</div>
+              <div class="text-sm" id="prospectCity">—</div>
+              <div class="text-sm" id="prospectPostcode">—</div>
+              <div class="text-sm" id="prospectDept">—</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-3 flex flex-col justify-between">
+              <div class="flex items-center gap-2">
+                <button id="prevBtn" class="btn" type="button">◀</button>
+                <button id="nextBtn" class="btn" type="button">▶</button>
+                <button id="saveBtn" class="btn" type="button" disabled>Enregistrer</button>
+                <button id="downloadBtn" class="btn" type="button">Exporter CSV</button>
+              </div>
+              <div class="flex items-center gap-2">
+                <input id="searchInput" type="text" class="input" placeholder="Rechercher dans toutes les fiches" />
+                <button id="searchBtn" class="btn" type="button">Rechercher</button>
+              </div>
+              <div class="flex items-center gap-2">
+                <input id="jumpInput" type="number" min="1" class="input w-24" placeholder="#" />
+                <button id="jumpBtn" class="btn" type="button">Aller</button>
+                <label class="flex items-center gap-2 text-sm text-slate-300">
+                  <input id="fileInput" type="file" accept=".csv" class="text-sm" />
+                  <span>Charger un CSV</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <p id="statusMessage" class="helper"></p>
+
+          <div id="fieldsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+
+        <section id="triTab" class="tab-content space-y-6">
+          <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <button class="subtab-btn btn is-active" data-range="range1">Départements 01-33</button>
+              <button class="subtab-btn btn" data-range="range2">Départements 34-66</button>
+              <button class="subtab-btn btn" data-range="range3">Départements 67-97</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm text-slate-300" for="deptInput">Département</label>
+                <div class="flex items-center gap-2">
+                  <input id="deptInput" list="deptOptions" class="input flex-1" placeholder="01, 33..." />
+                  <button id="clearDeptBtn" class="btn" type="button">Réinitialiser</button>
+                </div>
+                <datalist id="deptOptions"></datalist>
+                <div id="deptChips" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm text-slate-300" for="termInput">Recherche globale</label>
+                <div class="flex items-center gap-2">
+                  <input id="termInput" type="text" class="input flex-1" placeholder="Ajouter un terme" />
+                  <button id="addTermBtn" class="btn" type="button">Ajouter</button>
+                </div>
+                <div id="activeTerms" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-slate-300">Statut légal</span>
+                  <button id="resetFiltersBtn" class="btn" type="button">Réinitialiser</button>
+                </div>
+                <div id="statusFilter" class="flex flex-wrap gap-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="space-y-1">
+                <p id="resultsTitle" class="text-lg font-semibold">Résultats</p>
+                <p id="filterStatus" class="text-sm text-slate-400"></p>
+              </div>
+              <div id="resultsCount" class="text-sm bg-slate-800 px-3 py-1 rounded-full">0 résultat</div>
+            </div>
+            <div id="resultsWrapper" tabindex="0" class="overflow-x-auto border border-slate-700 rounded-lg focus:outline-none">
+              <table id="resultsTable" class="min-w-full text-sm">
+                <thead class="bg-slate-800 text-slate-200">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Titre</th>
+                    <th class="px-3 py-2 text-left">Capacité</th>
+                    <th class="px-3 py-2 text-left">Statut légal</th>
+                    <th class="px-3 py-2 text-left">Adresse</th>
+                    <th class="px-3 py-2 text-left">Code postal</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="prospectionTab" class="tab-content space-y-6">
+          <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectionDate1">Premier contact</label>
+                <input id="prospectionDate1" type="date" class="input" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectionDate2">Date de rappel</label>
+                <input id="prospectionDate2" type="date" class="input" />
+                <div class="flex gap-2">
+                  <button class="btn" type="button" data-reminder-offset="7">+7j</button>
+                  <button class="btn" type="button" data-reminder-offset="14">+14j</button>
+                  <button class="btn" type="button" data-reminder-offset="30">+30j</button>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectionCommentaires">Commentaires</label>
+                <textarea id="prospectionCommentaires" rows="3" class="input min-h-[90px]"></textarea>
+                <button id="saveProspectionBtn" class="btn w-full" type="button">Enregistrer la prospection</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectDeptFilter">Département</label>
+                <div class="flex items-center gap-2">
+                  <input id="prospectDeptFilter" list="prospectDeptOptions" class="input flex-1" placeholder="01, 33..." />
+                  <button id="prospectClearDept" class="btn" type="button">Effacer</button>
+                </div>
+                <datalist id="prospectDeptOptions"></datalist>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectDate1Start">Date 1</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="prospectDate1Start" type="date" class="input" />
+                  <input id="prospectDate1End" type="date" class="input" />
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectDate2Start">Date 2</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="prospectDate2Start" type="date" class="input" />
+                  <input id="prospectDate2End" type="date" class="input" />
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="text-sm text-slate-300" for="prospectCommentSearch">Commentaires</label>
+                <input id="prospectCommentSearch" type="text" class="input" placeholder="Rechercher dans les commentaires" />
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-slate-300">Statut légal</span>
+                  <button id="prospectResetFilters" class="btn" type="button">Réinitialiser</button>
+                </div>
+                <div id="prospectStatusFilter" class="flex flex-wrap gap-2"></div>
+              </div>
+            </div>
+            <p id="prospectFilterStatus" class="text-sm text-slate-400"></p>
+            <div id="prospectResultsWrapper" class="overflow-x-auto border border-slate-700 rounded-lg">
+              <table id="prospectResultsTable" class="min-w-full text-sm">
+                <thead class="bg-slate-800 text-slate-200">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Titre</th>
+                    <th class="px-3 py-2 text-left">Département</th>
+                    <th class="px-3 py-2 text-left">Date 1</th>
+                    <th class="px-3 py-2 text-left">Date 2</th>
+                    <th class="px-3 py-2 text-left">Commentaires</th>
+                  </tr>
+                </thead>
+                <tbody id="prospectResultsBody" class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
   <script src="app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js" integrity="sha512-ljvI6zNlKVAO4PE9zrQOufyDhG1SN0SZ6PpQDEiT28nnvPqzEboNiBN/yTFUaD17W21L9HRSDhSiOnlwEmL9+g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"
+    integrity="sha512-ljvI6zNlKVAO4PE9zrQOufydhG1SN0SZ6PpQDEiT28nnvPqzEboNiBN/yTFUaD17W21L9HRSDhSiOnlwEmL9+g=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
 </body>
 </html>

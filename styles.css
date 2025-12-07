@@ -1,1 +1,191 @@
+:root {
+  --surface: #0f172a;
+  --surface-alt: #1e293b;
+  --border: #334155;
+  --primary: #22d3ee;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+}
 
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, #1f2937, #111827);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.btn:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, #111827, #0b1220);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text);
+}
+
+.input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.helper {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.helper.status-ok {
+  color: #4ade80;
+}
+
+.helper.status-warning {
+  color: #fbbf24;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.is-active {
+  display: block;
+}
+
+.tab-btn,
+.subtab-btn {
+  border-radius: 9999px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.is-active,
+.subtab-btn.is-active {
+  border-color: var(--primary);
+  color: #0c4a6e;
+  background: #a5f3fc;
+}
+
+.field {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.field textarea {
+  min-height: 90px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.6rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.chip--closable button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.check-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.check-chip input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.check-chip::after,
+.check-chip * {
+  color: inherit;
+}
+
+.check-chip input:checked + span {
+  color: #0c4a6e;
+}
+
+.check-chip input:checked + span,
+.check-chip input:checked ~ * {
+  color: #0c4a6e;
+}
+
+#statusFilter .check-chip,
+#statusFilter .check-chip::after,
+#statusFilter .check-chip * {
+  color: var(--text);
+}
+
+#prospectStatusFilter .check-chip,
+#prospectStatusFilter .check-chip::after,
+#prospectStatusFilter .check-chip * {
+  color: var(--text);
+}
+
+#resultsTable tr.is-selected {
+  background: rgba(34, 211, 238, 0.1);
+}
+
+#resultsTable th,
+#resultsTable td,
+#prospectResultsTable th,
+#prospectResultsTable td {
+  padding: 0.6rem 0.75rem;
+}
+
+#prospectionCommentaires {
+  min-height: 90px;
+}

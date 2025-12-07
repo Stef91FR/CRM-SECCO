@@ -469,16 +469,17 @@ function renderResultsTable() {
   resultsTableBody.innerHTML = '';
   const idIdx = getColumnIndex('_id');
   const nameIdx = getColumnIndex('title');
-  const deptIdx = getColumnIndex('coordinates.deptcode');
-  const cityIdx = getColumnIndex('coordinates.city');
-  const legalIdx = getColumnIndex('legal_status');
   const capacityIdx = getColumnIndex('capacity');
-  const phoneIdx = getColumnIndex('coordinates.phone');
+  const legalIdx = getColumnIndex('legal_status');
+  const streetIdx = getColumnIndex('coordinates.street');
+  const streetAltIdx = streetIdx < 0 ? getColumnIndex('coordonate.street') : -1;
+  const postcodeIdx = getColumnIndex('coordinates.postcode');
+  const postcodeAltIdx = postcodeIdx < 0 ? getColumnIndex('poscode') : -1;
 
   if (!state.filters.filteredIndexes.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 7;
+    cell.colSpan = 5;
     cell.textContent = 'Aucun résultat pour ces critères.';
     row.appendChild(cell);
     resultsTableBody.appendChild(row);
@@ -496,9 +497,17 @@ function renderResultsTable() {
       tr.classList.add('is-selected');
     }
     tr.dataset.index = rowIndex;
-    const cells = [idIdx, nameIdx, deptIdx, legalIdx, cityIdx, capacityIdx, phoneIdx].map(idx =>
-      idx >= 0 ? row[idx] || '' : ''
-    );
+    const streetValue = streetIdx >= 0 ? row[streetIdx] : streetAltIdx >= 0 ? row[streetAltIdx] : '';
+    const postcodeValue =
+      postcodeIdx >= 0 ? row[postcodeIdx] : postcodeAltIdx >= 0 ? row[postcodeAltIdx] : '';
+
+    const cells = [
+      nameIdx >= 0 ? row[nameIdx] || '' : '',
+      capacityIdx >= 0 ? row[capacityIdx] || '' : '',
+      legalIdx >= 0 ? row[legalIdx] || '' : '',
+      streetValue || '',
+      postcodeValue || '',
+    ];
     cells.forEach(value => {
       const td = document.createElement('td');
       td.textContent = value;
