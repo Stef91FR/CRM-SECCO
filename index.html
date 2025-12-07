@@ -72,7 +72,7 @@
 
     <div id="triTab" class="tab-content">
       <section class="panel">
-        <div class="panel__row panel__row--wrap">
+        <div class="panel__row panel__row--wrap tri-filters">
           <div class="filter-block">
             <p class="eyebrow">Département</p>
             <div class="dept-subtabs">
@@ -88,19 +88,21 @@
             <div id="deptChips" class="chip-grid"></div>
           </div>
 
-          <div class="filter-block">
-            <p class="eyebrow">Statut légal</p>
-            <div id="statusFilter" class="chip-grid"></div>
-          </div>
-
-          <div class="filter-block">
-            <p class="eyebrow">Recherche multi-champs</p>
-            <div class="inline">
-              <input id="termInput" class="input" type="search" placeholder="Ajouter un terme (nom, ville, gestionnaire...)" />
-              <button id="addTermBtn" class="btn btn--ghost">Ajouter</button>
-              <button id="resetFiltersBtn" class="btn">Réinitialiser</button>
+          <div class="filter-inline-grid">
+            <div class="filter-block filter-block--status">
+              <p class="eyebrow">Statut légal</p>
+              <div id="statusFilter" class="chip-grid"></div>
             </div>
-            <div id="activeTerms" class="chip-row"></div>
+
+            <div class="filter-block filter-block--multi">
+              <p class="eyebrow">Recherche multi-champs</p>
+              <div class="inline inline--nowrap">
+                <input id="termInput" class="input" type="search" placeholder="Ajouter un terme (nom, ville, gestionnaire...)" />
+                <button id="addTermBtn" class="btn btn--ghost">Ajouter</button>
+                <button id="resetFiltersBtn" class="btn">Réinitialiser</button>
+              </div>
+              <div id="activeTerms" class="chip-row"></div>
+            </div>
           </div>
         </div>
         <p class="helper" id="filterStatus"></p>
