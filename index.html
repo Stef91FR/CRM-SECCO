@@ -42,7 +42,7 @@
           </div>
         </div>
 
-        <div class="panel__row panel__row--wrap">
+        <div class="panel__row panel__row--wrap filters-grid">
           <label class="inline">
             Rechercher
             <input id="searchInput" type="search" placeholder="Nom, ville, gestionnaire..." class="input" />
@@ -159,22 +159,20 @@
           </div>
 
           <div class="prospection-grid">
-            <div>
+            <div class="prospection-field">
               <label for="prospectionDate1">Date 1er contact</label>
               <input type="date" id="prospectionDate1" class="input" />
             </div>
-            <div>
-              <div class="label-row">
-                <label for="prospectionDate2">Date de rappel</label>
-                <div class="quick-dates">
-                  <button type="button" class="pill pill--ghost" data-reminder-offset="7">+1 semaine</button>
-                  <button type="button" class="pill pill--ghost" data-reminder-offset="14">+2 semaines</button>
-                  <button type="button" class="pill pill--ghost" data-reminder-offset="21">+3 semaines</button>
-                </div>
-              </div>
+            <div class="prospection-field">
+              <label for="prospectionDate2">Date de rappel</label>
               <input type="date" id="prospectionDate2" class="input" />
+              <div class="quick-dates quick-dates--stack">
+                <button type="button" class="pill pill--ghost" data-reminder-offset="7">+1 semaine</button>
+                <button type="button" class="pill pill--ghost" data-reminder-offset="14">+2 semaines</button>
+                <button type="button" class="pill pill--ghost" data-reminder-offset="21">+3 semaines</button>
+              </div>
             </div>
-            <div style="grid-column: 1 / -1;">
+            <div class="prospection-field prospection-field--wide">
               <label for="prospectionCommentaires">Commentaires</label>
               <textarea id="prospectionCommentaires" rows="7"></textarea>
             </div>
@@ -189,7 +187,7 @@
 
       <div id="prospectSearchPane" class="prospect-pane">
         <section class="panel">
-          <div class="panel__row panel__row--wrap">
+          <div class="panel__row panel__row--wrap filters-grid">
             <div class="filter-block">
               <p class="eyebrow">Département</p>
               <div class="inline">
