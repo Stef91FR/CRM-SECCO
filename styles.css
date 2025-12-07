@@ -164,6 +164,13 @@ h2 {
   flex-wrap: wrap;
 }
 
+.tri-filters {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr);
+  gap: 14px 18px;
+  align-items: start;
+}
+
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -189,6 +196,10 @@ h2 {
   gap: 6px;
   color: var(--muted);
   font-weight: 600;
+}
+
+.inline--nowrap {
+  flex-wrap: nowrap;
 }
 
 .input {
@@ -342,8 +353,8 @@ h2 {
   background: #1f2937;
   border-color: #1f2937;
   color: var(--text);
-  height: clamp(420px, 60vh, 760px);
-  min-height: 320px;
+  height: clamp(210px, 30vh, 380px);
+  min-height: 160px;
 }
 
 .quick-dates {
@@ -485,6 +496,32 @@ h2 {
   gap: 8px;
 }
 
+.filter-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px 16px;
+  width: 100%;
+}
+
+.filter-block--status {
+  min-width: 260px;
+}
+
+.filter-block--multi {
+  max-width: 400px;
+  width: 100%;
+  justify-self: end;
+}
+
+.filter-block--multi .input {
+  min-width: 220px;
+  width: 100%;
+}
+
+.filter-block--multi .inline {
+  width: 100%;
+}
+
 .chip-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
@@ -526,7 +563,8 @@ h2 {
 }
 
 .check-chip span {
-  color: #dfe7f4;
+  color: #e0e0ff;
+  opacity: 1;
 }
 
 .check-chip:hover {
@@ -542,6 +580,26 @@ h2 {
   background: rgba(16, 185, 129, 0.12);
   border-color: var(--accent);
   color: #d1fae5;
+}
+
+/* Ensure Statut légal labels remain legible on dark backgrounds */
+.eyebrow {
+  color: #ffffff !important;
+}
+
+#statusFilter .check-chip {
+  color: #e0e0e0 !important;
+}
+
+#statusFilter .check-chip span,
+#statusFilter .check-chip svg,
+#statusFilter .check-chip * {
+  color: #e0e0e0 !important;
+  fill: #e0e0e0 !important;
+}
+
+#statusFilter .check-chip input:checked + span {
+  color: #ffffff !important;
 }
 
 .chip-row {
@@ -618,5 +676,18 @@ tbody tr.is-selected {
   .panel,
   .card {
     padding: 16px;
+  }
+
+  .filter-inline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-block--multi {
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .inline--nowrap {
+    flex-wrap: wrap;
   }
 }
