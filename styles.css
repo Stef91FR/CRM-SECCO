@@ -353,8 +353,8 @@ h2 {
   background: #1f2937;
   border-color: #1f2937;
   color: var(--text);
-  height: clamp(420px, 60vh, 760px);
-  min-height: 320px;
+  height: clamp(210px, 30vh, 380px);
+  min-height: 160px;
 }
 
 .quick-dates {
