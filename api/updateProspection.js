@@ -1,12 +1,4 @@
-function columnLetter(index) {
-  let n = index;
-  let letters = '';
-  while (n >= 0) {
-    letters = String.fromCharCode((n % 26) + 65) + letters;
-    n = Math.floor(n / 26) - 1;
-  }
-  return letters;
-}
+import { google } from 'googleapis';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,80 +6,58 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.GOOGLE_API_KEY;
     const sheetId = process.env.SHEET_ID;
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 
-    if (!apiKey || !sheetId) {
-      return res.status(500).json({ error: "Variables d'environnement manquantes" });
-    }
+    const credentials = JSON.parse(serviceAccountJson);
+    const auth = new google.auth.JWT(
+      credentials.client_email,
+      null,
+      credentials.private_key,
+      ['https://www.googleapis.com/auth/spreadsheets']
+    );
 
-    const range = 'Base_ehpad';
+    const sheets = google.sheets({ version: 'v4', auth });
 
-    const bodyPayload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-    const { rowIndex, date1, date2, commentaires } = bodyPayload;
+    const { rowIndex, date1, date2, commentaires } =
+      typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 
-    const parsedIndex = Number(rowIndex);
-    if (!Number.isInteger(parsedIndex) || parsedIndex < 0) {
-      return res.status(400).json({ error: 'Index de ligne invalide' });
-    }
+    const numRow = Number(rowIndex) + 2;
+    const sheetName = 'Base_ehpad';
 
-    const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}`;
-
-    const headerUrl = `${baseUrl}/values/${encodeURIComponent(range)}?key=${apiKey}`;
-    const headerResponse = await fetch(headerUrl);
-    if (!headerResponse.ok) {
-      const text = await headerResponse.text();
-      throw new Error(`Lecture des headers échouée (${headerResponse.status}): ${text}`);
-    }
-    const headerData = await headerResponse.json();
-
-    const headers = headerData.values?.[0] || [];
-    const idxDate1 = headers.indexOf('prospection.date1ercontact');
-    const idxDate2 = headers.indexOf('prospection.daterappel');
-    const idxComments = headers.indexOf('prospection.commentaires');
-
-    if (idxDate1 < 0 && idxDate2 < 0 && idxComments < 0) {
-      return res.status(400).json({ error: 'Colonnes de prospection introuvables' });
-    }
-
-    const rowNumber = parsedIndex + 2;
-    const lastColumnLetter = columnLetter(Math.max(headers.length - 1, 0));
-    const rowRange = `${range}!A${rowNumber}:${lastColumnLetter}${rowNumber}`;
-
-    const rowUrl = `${baseUrl}/values/${encodeURIComponent(rowRange)}?key=${apiKey}`;
-    const rowResponse = await fetch(rowUrl);
-    if (!rowResponse.ok) {
-      const text = await rowResponse.text();
-      throw new Error(`Lecture de la ligne échouée (${rowResponse.status}): ${text}`);
-    }
-    const rowData = await rowResponse.json();
-    const currentRow = Array.from({ length: headers.length }, (_, i) => rowData.values?.[0]?.[i] || '');
-
-    if (idxDate1 >= 0) currentRow[idxDate1] = date1 || '';
-    if (idxDate2 >= 0) currentRow[idxDate2] = date2 || '';
-    if (idxComments >= 0) currentRow[idxComments] = commentaires || '';
-
-    const updateRange = rowRange;
-    const writeUrl = `${baseUrl}/values/${encodeURIComponent(updateRange)}?valueInputOption=USER_ENTERED&key=${apiKey}`;
-
-    const updateResponse = await fetch(writeUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        range: updateRange,
-        majorDimension: 'ROWS',
-        values: [currentRow],
-      }),
+    const headerResult = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `${sheetName}!1:1`
     });
 
-    if (!updateResponse.ok) {
-      const text = await updateResponse.text();
-      throw new Error(`Écriture Google Sheets échouée (${updateResponse.status}): ${text}`);
-    }
+    const headers = headerResult.data.values?.[0] || [];
+
+    const idx1 = headers.indexOf('prospection.date1ercontact');
+    const idx2 = headers.indexOf('prospection.daterappel');
+    const idx3 = headers.indexOf('prospection.commentaires');
+
+    const rowResult = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `${sheetName}!${numRow}:${numRow}`
+    });
+
+    const row = rowResult.data.values?.[0] || [];
+    while (row.length < headers.length) row.push('');
+
+    row[idx1] = date1 || '';
+    row[idx2] = date2 || '';
+    row[idx3] = commentaires || '';
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `${sheetName}!${numRow}:${numRow}`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [row] }
+    });
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error('Erreur API Google:', err);
     return res.status(500).json({ error: 'Erreur API', details: err.message });
   }
 }
