@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base EHPAD – Navigateur de fiches</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app__header">
+      <div>
+        <p class="eyebrow">Explorateur CSV</p>
+        <h1>Base EHPAD</h1>
+        <p class="lede">Parcourez, recherchez et modifiez les fiches de <code>base_ehpad.csv</code> facilement.</p>
+      </div>
+      <div class="badge">CSV local</div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn is-active" data-tab="ficheTab">Fiches</button>
+      <button class="tab-btn" data-tab="triTab">Tri &amp; recherche</button>
+      <button class="tab-btn" data-tab="prospectionTab">Prospection</button>
+    </nav>
+
+    <div id="ficheTab" class="tab-content is-active">
+      <section class="panel">
+        <div class="panel__row">
+          <div class="nav-controls">
+            <button id="prevBtn" class="btn" disabled>◀ Précédent</button>
+            <div class="badge badge--ghost">
+              <span id="currentIndex">0</span> / <span id="totalCount">0</span>
+            </div>
+            <button id="nextBtn" class="btn" disabled>Suivant ▶</button>
+          </div>
+          <div class="actions">
+            <label class="inline">
+              Aller à la fiche
+              <input id="jumpInput" type="number" min="1" class="input" />
+            </label>
+            <button id="jumpBtn" class="btn btn--ghost">Aller</button>
+          </div>
+        </div>
+
+        <div class="panel__row panel__row--wrap">
+          <label class="inline">
+            Rechercher
+            <input id="searchInput" type="search" placeholder="Nom, ville, gestionnaire..." class="input" />
+          </label>
+          <button id="searchBtn" class="btn btn--ghost">Rechercher</button>
+          <button id="saveBtn" class="btn btn--primary" disabled>Enregistrer les modifications</button>
+          <button id="downloadBtn" class="btn">Télécharger le CSV</button>
+          <label class="file-upload btn btn--ghost">
+            Charger un CSV
+            <input id="fileInput" type="file" accept=".csv,text/csv" />
+          </label>
+        </div>
+        <p class="helper" id="statusMessage"></p>
+      </section>
+
+      <section class="card">
+        <div class="card__title">
+          <div>
+            <p class="eyebrow">Fiche en cours</p>
+            <h2 id="recordTitle">Sélectionnez une fiche</h2>
+          </div>
+          <div class="pill" id="recordId"></div>
+        </div>
+        <div id="fieldsContainer" class="fields"></div>
+      </section>
+    </div>
+
+    <div id="triTab" class="tab-content">
+      <section class="panel">
+        <div class="panel__row panel__row--wrap">
+          <div class="filter-block">
+            <p class="eyebrow">Département</p>
+            <div class="inline">
+              <input id="deptInput" class="input" list="deptOptions" placeholder="Ex : 75 ou 974" />
+              <datalist id="deptOptions"></datalist>
+              <button id="clearDeptBtn" class="btn btn--ghost">Effacer</button>
+            </div>
+            <div id="deptChips" class="chip-grid"></div>
+          </div>
+
+          <div class="filter-block">
+            <p class="eyebrow">Recherche multi-champs</p>
+            <div class="inline">
+              <input id="termInput" class="input" type="search" placeholder="Ajouter un terme (nom, ville, gestionnaire...)" />
+              <button id="addTermBtn" class="btn btn--ghost">Ajouter</button>
+              <button id="resetFiltersBtn" class="btn">Réinitialiser</button>
+            </div>
+            <div id="activeTerms" class="chip-row"></div>
+          </div>
+        </div>
+        <p class="helper" id="filterStatus"></p>
+      </section>
+
+      <section class="card">
+        <div class="card__title">
+          <div>
+            <p class="eyebrow">Résultats</p>
+            <h2 id="resultsTitle">Filtrez pour afficher les EHPAD</h2>
+          </div>
+          <div class="pill" id="resultsCount">0 résultat</div>
+        </div>
+        <div class="table-wrapper" tabindex="0" id="resultsWrapper">
+          <table id="resultsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Département</th>
+                <th>Ville</th>
+                <th>Capacité</th>
+                <th>Tél</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div id="prospectionTab" class="tab-content">
+      <h2>Prospection</h2>
+
+      <label>Date 1er contact :</label>
+      <input type="date" id="prospectionDate1">
+
+      <label>Date de rappel :</label>
+      <input type="date" id="prospectionDate2">
+
+      <label>Commentaires :</label>
+      <textarea id="prospectionCommentaires"></textarea>
+
+      <button id="saveProspectionBtn">Enregistrer la prospection</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
