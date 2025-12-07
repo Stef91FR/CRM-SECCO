@@ -32,6 +32,11 @@ const fileInput = document.getElementById('fileInput');
 const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
 const tabContents = Array.from(document.querySelectorAll('.tab-content'));
 
+const prospectionDate1 = document.getElementById('prospectionDate1');
+const prospectionDate2 = document.getElementById('prospectionDate2');
+const prospectionCommentaires = document.getElementById('prospectionCommentaires');
+const saveProspectionBtn = document.getElementById('saveProspectionBtn');
+
 const deptInput = document.getElementById('deptInput');
 const deptOptions = document.getElementById('deptOptions');
 const deptChips = document.getElementById('deptChips');
@@ -170,15 +175,26 @@ function buildForm(headers) {
   });
 }
 
+function loadProspectionFields(row) {
+  const idxDate1 = getColumnIndex('prospection.date1ercontact');
+  const idxDate2 = getColumnIndex('prospection.daterappel');
+  const idxComments = getColumnIndex('prospection.commentaires');
+
+  prospectionDate1.value = idxDate1 >= 0 ? row[idxDate1] || '' : '';
+  prospectionDate2.value = idxDate2 >= 0 ? row[idxDate2] || '' : '';
+  prospectionCommentaires.value = idxComments >= 0 ? row[idxComments] || '' : '';
+}
+
 function displayRecord(index) {
   const row = padRow(state.rows[index] || [], state.headers.length);
   state.inputs.forEach((input, idx) => {
     input.value = row[idx] || '';
   });
 
+  loadProspectionFields(row);
+
   const titleIdx = state.headers.findIndex(h => h.toLowerCase() === 'title');
-  recordTitle.textContent =
-    titleIdx >= 0 ? row[titleIdx] || 'Sans titre' : `Fiche ${index + 1}`;
+  recordTitle.textContent = titleIdx >= 0 ? row[titleIdx] || 'Sans titre' : `Fiche ${index + 1}`;
   recordId.textContent = row[0] || `#${index + 1}`;
 
   currentIndexEl.textContent = index + 1;
@@ -211,9 +227,7 @@ function goTo(index) {
 function findRecord(term) {
   const needle = term.trim().toLowerCase();
   if (!needle) return -1;
-  return state.rows.findIndex(row =>
-    row.some(cell => (cell || '').toLowerCase().includes(needle))
-  );
+  return state.rows.findIndex(row => row.some(cell => (cell || '').toLowerCase().includes(needle)));
 }
 
 function renderDeptChips(departments) {
@@ -224,8 +238,7 @@ function renderDeptChips(departments) {
     chip.className = `chip ${state.filters.dept === code ? 'is-active' : ''}`;
     chip.textContent = code;
     chip.addEventListener('click', () => {
-      state.filters.dept =
-        state.filters.dept === code ? '' : code;
+      state.filters.dept = state.filters.dept === code ? '' : code;
       deptInput.value = state.filters.dept;
       renderDeptChips(departments);
       applyFilters();
@@ -235,9 +248,8 @@ function renderDeptChips(departments) {
 }
 
 function buildDeptFilters() {
-  const uniqueDepts = Array.from(new Set(state.rowDepts.filter(Boolean))).sort((a, b) =>
-    a.localeCompare(b, 'fr', { numeric: true })
-  );
+  const uniqueDepts = Array.from(new Set(state.rowDepts.filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
 
   state.departments = uniqueDepts;
 
@@ -295,19 +307,16 @@ function renderResultsTable() {
     return;
   }
 
-  const selectedGlobalIndex =
-    state.filters.filteredIndexes[state.filters.selectedResult] ?? -1;
+  const selectedGlobalIndex = state.filters.filteredIndexes[state.filters.selectedResult] ?? -1;
 
   state.filters.filteredIndexes.forEach((rowIndex, displayIdx) => {
     const row = state.rows[rowIndex] || [];
     const tr = document.createElement('tr');
-    if (rowIndex === selectedGlobalIndex) tr.classList.add('is-selected');
+    if (rowIndex === selectedGlobalIndex) {
+      tr.classList.add('is-selected');
+    }
     tr.dataset.index = rowIndex;
-
-    const cells = [idIdx, nameIdx, deptIdx, cityIdx, capacityIdx, phoneIdx].map(idx =>
-      idx >= 0 ? row[idx] || '' : ''
-    );
-
+    const cells = [idIdx, nameIdx, deptIdx, cityIdx, capacityIdx, phoneIdx].map(idx => (idx >= 0 ? row[idx] || '' : ''));
     cells.forEach(value => {
       const td = document.createElement('td');
       td.textContent = value;
@@ -339,11 +348,7 @@ function applyFilters() {
 
   if (terms.length) {
     indexes = indexes.filter(i =>
-      terms.every(term =>
-        state.rows[i].some(cell =>
-          (cell || '').toLowerCase().includes(term)
-        )
-      )
+      terms.every(term => state.rows[i].some(cell => (cell || '').toLowerCase().includes(term)))
     );
   }
 
@@ -351,6 +356,59 @@ function applyFilters() {
   state.filters.selectedResult = indexes.length ? 0 : -1;
   filterStatus.textContent = `${indexes.length} ligne${indexes.length > 1 ? 's' : ''} trouvée${indexes.length > 1 ? 's' : ''}`;
   renderResultsTable();
+}
+
+async function saveProspection() {
+  const rowIndex = state.currentIndex;
+  if (rowIndex == null || rowIndex < 0 || rowIndex >= state.rows.length) {
+    setStatus('Aucune fiche sélectionnée.', 'warning');
+    return;
+  }
+
+  const payload = {
+    rowIndex,
+    date1: prospectionDate1.value,
+    date2: prospectionDate2.value,
+    commentaires: prospectionCommentaires.value,
+  };
+
+  try {
+    const response = await fetch('/api/updateProspection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const result = (await response.json()) || {};
+
+    if (response.ok && result.success) {
+      const row = padRow(state.rows[rowIndex] || [], state.headers.length);
+      const idxDate1 = getColumnIndex('prospection.date1ercontact');
+      const idxDate2 = getColumnIndex('prospection.daterappel');
+      const idxComments = getColumnIndex('prospection.commentaires');
+
+      if (idxDate1 >= 0) {
+        row[idxDate1] = payload.date1;
+        if (state.inputs[idxDate1]) state.inputs[idxDate1].value = payload.date1;
+      }
+      if (idxDate2 >= 0) {
+        row[idxDate2] = payload.date2;
+        if (state.inputs[idxDate2]) state.inputs[idxDate2].value = payload.date2;
+      }
+      if (idxComments >= 0) {
+        row[idxComments] = payload.commentaires;
+        if (state.inputs[idxComments]) state.inputs[idxComments].value = payload.commentaires;
+      }
+
+      state.rows[rowIndex] = row;
+      setStatus('Prospection mise à jour.', 'ok');
+    } else {
+      setStatus('Erreur mise à jour prospection.', 'warning');
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus('Erreur réseau.', 'warning');
+  }
 }
 
 function addSearchTerm() {
@@ -366,25 +424,19 @@ function addSearchTerm() {
 
 function loadData(rows) {
   if (!rows.length) {
-    setStatus('Le tableau Google Sheets est vide ou invalide.', 'warning');
+    setStatus('Le CSV est vide ou invalide.', 'warning');
     return;
   }
-
   state.headers = rows[0];
   state.rows = rows.slice(1).map(r => padRow(r, state.headers.length));
-
   const deptIndex = getColumnIndex('coordinates.deptcode');
   const postcodeIndex = getColumnIndex('coordinates.postcode');
-
   state.rowDepts = state.rows.map(row =>
     normalizeDeptCode(
       (deptIndex >= 0 ? row[deptIndex] : '') ||
-        deriveDeptFromPostcode(
-          postcodeIndex >= 0 ? row[postcodeIndex] : ''
-        )
+        deriveDeptFromPostcode(postcodeIndex >= 0 ? row[postcodeIndex] : '')
     )
   );
-
   buildForm(state.headers);
   state.currentIndex = 0;
   displayRecord(0);
@@ -393,33 +445,32 @@ function loadData(rows) {
   renderActiveTerms();
   buildDeptFilters();
   applyFilters();
-
-  setStatus('Données chargées depuis Google Sheets.', 'ok');
+  setStatus('CSV chargé avec succès.');
 }
 
-/*
-  🔥 NOUVELLE FONCTION GOOGLE SHEETS
-  ---------------------------------
-  Remplace totalement l’ancienne lecture CSV
-*/
 async function loadDefaultCsv() {
   try {
-    const response = await fetch('/api/readEhpad');
-    if (!response.ok) throw new Error(`Erreur API ${response.status}`);
-
-    const result = await response.json();
-    const rows = result.data;
-
-    if (!rows || !rows.length) {
-      setStatus("Google Sheets renvoie une feuille vide.", "warning");
-      return;
-    }
-
+    const apiResponse = await fetch('/api/readEhpad');
+    if (!apiResponse.ok) throw new Error(`Statut API ${apiResponse.status}`);
+    const payload = await apiResponse.json();
+    const rows = Array.isArray(payload?.data) ? payload.data : [];
+    if (!rows.length) throw new Error('Données Google Sheets vides');
     loadData(rows);
+    setStatus('Données Google Sheets chargées.');
+    return;
+  } catch (apiErr) {
+    console.warn('Lecture via /api/readEhpad impossible, tentative CSV local.', apiErr);
+  }
 
+  try {
+    const response = await fetch('base_ehpad.csv');
+    if (!response.ok) throw new Error(`Statut ${response.status}`);
+    const text = await response.text();
+    const rows = parseCSV(text);
+    loadData(rows);
   } catch (err) {
-    console.error("Erreur Google Sheets:", err);
-    setStatus("Impossible de charger les données depuis Google Sheets.", "warning");
+    setStatus('Impossible de charger base_ehpad.csv. Importez un fichier via "Charger un CSV".', 'warning');
+    console.error(err);
   }
 }
 
@@ -430,6 +481,8 @@ saveBtn.addEventListener('click', persistCurrentRecord);
 tabButtons.forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
+
+saveProspectionBtn.addEventListener('click', saveProspection);
 
 deptInput.addEventListener('input', () => {
   state.filters.dept = deptInput.value.trim();
@@ -445,7 +498,6 @@ clearDeptBtn.addEventListener('click', () => {
 });
 
 addTermBtn.addEventListener('click', addSearchTerm);
-
 termInput.addEventListener('keydown', event => {
   if (event.key === 'Enter') {
     event.preventDefault();
@@ -538,5 +590,4 @@ window.addEventListener('beforeunload', event => {
   event.returnValue = '';
 });
 
-/* CHARGEMENT AU DÉMARRAGE → GOOGLE SHEETS */
 loadDefaultCsv();

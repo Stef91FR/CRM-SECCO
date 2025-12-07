@@ -20,6 +20,7 @@
     <nav class="tabs">
       <button class="tab-btn is-active" data-tab="ficheTab">Fiches</button>
       <button class="tab-btn" data-tab="triTab">Tri &amp; recherche</button>
+      <button class="tab-btn" data-tab="prospectionTab">Prospection</button>
     </nav>
 
     <div id="ficheTab" class="tab-content is-active">
@@ -119,6 +120,21 @@
           </table>
         </div>
       </section>
+    </div>
+
+    <div id="prospectionTab" class="tab-content">
+      <h2>Prospection</h2>
+
+      <label>Date 1er contact :</label>
+      <input type="date" id="prospectionDate1">
+
+      <label>Date de rappel :</label>
+      <input type="date" id="prospectionDate2">
+
+      <label>Commentaires :</label>
+      <textarea id="prospectionCommentaires"></textarea>
+
+      <button id="saveProspectionBtn">Enregistrer la prospection</button>
     </div>
   </div>
 
