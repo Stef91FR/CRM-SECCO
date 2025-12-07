@@ -600,6 +600,12 @@ h2 {
   fill: #ffffff !important;
 }
 
+#statusFilter .check-chip,
+#statusFilter .check-chip::after {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
 #statusFilter .check-chip input:checked + span {
   color: #ffffff !important;
 }
