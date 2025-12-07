@@ -1,121 +1,124 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="mydark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Base EHPAD – Navigateur de fiches</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <div class="app">
-    <header class="app__header">
-      <div>
-        <p class="eyebrow">Explorateur CSV</p>
-        <h1>Base EHPAD</h1>
-        <p class="lede">Parcourez, recherchez et modifiez les fiches de <code>base_ehpad.csv</code> facilement.</p>
+<body class="bg-base-200 text-base-content min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <header class="bg-base-300 rounded-2xl shadow-xl border border-base-300/60 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="space-y-1">
+        <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Explorateur CSV</p>
+        <h1 class="text-3xl font-bold">Base EHPAD</h1>
+        <p class="text-sm text-base-content/70">Parcourez, recherchez et modifiez les fiches de <code class="text-primary font-semibold">base_ehpad.csv</code> facilement.</p>
       </div>
-      <div class="badge">CSV local</div>
+      <div class="badge badge-primary badge-lg text-primary-content font-semibold">CSV local</div>
     </header>
 
-      <nav class="tabs">
-        <button class="tab-btn is-active" data-tab="ficheTab">Fiches</button>
-        <button class="tab-btn" data-tab="triTab">Tri &amp; recherche</button>
-        <button class="tab-btn" data-tab="prospectionTab">Prospection</button>
-      </nav>
+    <nav class="bg-base-300 border border-base-300/60 rounded-2xl shadow-lg p-2 flex flex-wrap gap-2">
+      <button class="tab-btn is-active" data-tab="ficheTab">Fiches</button>
+      <button class="tab-btn" data-tab="triTab">Tri &amp; recherche</button>
+      <button class="tab-btn" data-tab="prospectionTab">Prospection</button>
+    </nav>
 
-    <div id="ficheTab" class="tab-content is-active">
-      <section class="panel">
-        <div class="panel__row">
-          <div class="nav-controls">
-            <button id="prevBtn" class="btn" disabled>◀ Précédent</button>
-            <div class="badge badge--ghost">
+    <div id="ficheTab" class="tab-content is-active space-y-4">
+      <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-4">
+        <div class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="prevBtn" class="btn btn-ghost btn-sm" disabled>◀ Précédent</button>
+            <div class="badge badge-outline badge-lg text-sm">
               <span id="currentIndex">0</span> / <span id="totalCount">0</span>
             </div>
-            <button id="nextBtn" class="btn" disabled>Suivant ▶</button>
+            <button id="nextBtn" class="btn btn-ghost btn-sm" disabled>Suivant ▶</button>
           </div>
-          <div class="actions">
-            <label class="inline">
-              Aller à la fiche
-              <input id="jumpInput" type="number" min="1" class="input" />
+          <div class="flex flex-wrap items-end gap-3">
+            <label class="form-control w-32">
+              <span class="label-text text-xs text-base-content/70">Aller à la fiche</span>
+              <input id="jumpInput" type="number" min="1" class="input input-bordered input-sm" />
             </label>
-            <button id="jumpBtn" class="btn btn--ghost">Aller</button>
+            <button id="jumpBtn" class="btn btn-outline btn-sm">Aller</button>
           </div>
         </div>
 
-        <div class="panel__row panel__row--wrap filters-grid">
-          <label class="inline">
-            Rechercher
-            <input id="searchInput" type="search" placeholder="Nom, ville, gestionnaire..." class="input" />
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 items-start">
+          <label class="form-control col-span-1 md:col-span-2 xl:col-span-1">
+            <span class="label-text text-xs text-base-content/70">Rechercher</span>
+            <input id="searchInput" type="search" placeholder="Nom, ville, gestionnaire..." class="input input-bordered w-full" />
           </label>
-          <button id="searchBtn" class="btn btn--ghost">Rechercher</button>
-          <button id="saveBtn" class="btn btn--primary" disabled>Enregistrer les modifications</button>
-          <button id="downloadBtn" class="btn">Télécharger le CSV</button>
-          <label class="file-upload btn btn--ghost">
-            Charger un CSV
-            <input id="fileInput" type="file" accept=".csv,text/csv" />
-          </label>
+          <div class="flex flex-wrap gap-2">
+            <button id="searchBtn" class="btn btn-outline">Rechercher</button>
+            <button id="saveBtn" class="btn btn-primary" disabled>Enregistrer les modifications</button>
+            <button id="downloadBtn" class="btn">Télécharger le CSV</button>
+            <label class="btn btn-outline">
+              Charger un CSV
+              <input id="fileInput" type="file" accept=".csv,text/csv" class="hidden" />
+            </label>
+          </div>
         </div>
-        <p class="helper" id="statusMessage"></p>
+        <p class="helper text-sm" id="statusMessage"></p>
       </section>
 
-      <section class="card">
-        <div class="card__title">
+      <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p class="eyebrow">Fiche en cours</p>
-            <h2 id="recordTitle">Sélectionnez une fiche</h2>
+            <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Fiche en cours</p>
+            <h2 id="recordTitle" class="text-2xl font-bold">Sélectionnez une fiche</h2>
           </div>
-          <div class="pill" id="recordId"></div>
+          <div class="pill badge badge-outline badge-lg" id="recordId"></div>
         </div>
-        <div id="fieldsContainer" class="fields"></div>
+        <div id="fieldsContainer" class="grid gap-3"></div>
       </section>
     </div>
 
-    <div id="triTab" class="tab-content">
-      <section class="panel">
-        <div class="panel__row panel__row--wrap">
-          <div class="filter-block">
-            <p class="eyebrow">Département</p>
-            <div class="dept-subtabs">
+    <div id="triTab" class="tab-content space-y-4">
+      <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-4">
+        <div class="grid gap-4 lg:grid-cols-3">
+          <div class="space-y-3">
+            <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Département</p>
+            <div class="flex flex-wrap gap-2">
               <button class="subtab-btn is-active" data-range="range1">1 – 33</button>
               <button class="subtab-btn" data-range="range2">34 – 66</button>
               <button class="subtab-btn" data-range="range3">67 – 98</button>
             </div>
-            <div class="inline">
-              <input id="deptInput" class="input" list="deptOptions" placeholder="Ex : 75 ou 974" />
+            <div class="flex flex-wrap gap-2 items-end">
+              <input id="deptInput" class="input input-bordered input-sm w-28" list="deptOptions" placeholder="Ex : 75 ou 974" />
               <datalist id="deptOptions"></datalist>
-              <button id="clearDeptBtn" class="btn btn--ghost">Effacer</button>
+              <button id="clearDeptBtn" class="btn btn-ghost btn-sm">Effacer</button>
             </div>
-            <div id="deptChips" class="chip-grid"></div>
+            <div id="deptChips" class="flex flex-wrap gap-2"></div>
           </div>
 
-          <div class="filter-block">
-            <p class="eyebrow">Statut légal</p>
-            <div id="statusFilter" class="chip-grid"></div>
+          <div class="space-y-3">
+            <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Statut légal</p>
+            <div id="statusFilter" class="flex flex-wrap gap-2"></div>
           </div>
 
-          <div class="filter-block">
-            <p class="eyebrow">Recherche multi-champs</p>
-            <div class="inline">
-              <input id="termInput" class="input" type="search" placeholder="Ajouter un terme (nom, ville, gestionnaire...)" />
-              <button id="addTermBtn" class="btn btn--ghost">Ajouter</button>
-              <button id="resetFiltersBtn" class="btn">Réinitialiser</button>
+          <div class="space-y-3">
+            <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Recherche multi-champs</p>
+            <div class="flex flex-wrap gap-2">
+              <input id="termInput" class="input input-bordered flex-1 min-w-[220px]" type="search" placeholder="Ajouter un terme (nom, ville, gestionnaire...)" />
+              <button id="addTermBtn" class="btn btn-ghost">Ajouter</button>
+              <button id="resetFiltersBtn" class="btn btn-outline">Réinitialiser</button>
             </div>
-            <div id="activeTerms" class="chip-row"></div>
+            <div id="activeTerms" class="flex flex-wrap gap-2"></div>
           </div>
         </div>
-        <p class="helper" id="filterStatus"></p>
+        <p class="helper text-sm" id="filterStatus"></p>
       </section>
 
-      <section class="card">
-        <div class="card__title">
+      <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p class="eyebrow">Résultats</p>
-            <h2 id="resultsTitle">Filtrez pour afficher les EHPAD</h2>
+            <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Résultats</p>
+            <h2 id="resultsTitle" class="text-2xl font-bold">Filtrez pour afficher les EHPAD</h2>
           </div>
-          <div class="pill" id="resultsCount">0 résultat</div>
+          <div class="pill badge badge-outline badge-lg" id="resultsCount">0 résultat</div>
         </div>
-        <div class="table-wrapper" tabindex="0" id="resultsWrapper">
-          <table id="resultsTable">
+        <div class="overflow-auto rounded-xl border border-base-300/60" tabindex="0" id="resultsWrapper">
+          <table id="resultsTable" class="table table-zebra w-full text-sm">
             <thead>
               <tr>
                 <th>ID</th>
@@ -133,119 +136,122 @@
       </section>
     </div>
 
-    <div id="prospectionTab" class="tab-content">
-      <section class="prospection-hero">
-        <p class="eyebrow">Prospection</p>
-        <p class="lede">Visualisez le contexte de la fiche puis notez vos échanges et prochaines étapes.</p>
+    <div id="prospectionTab" class="tab-content space-y-4">
+      <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-2">
+        <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Prospection</p>
+        <p class="text-base text-base-content/80">Visualisez le contexte de la fiche puis notez vos échanges et prochaines étapes.</p>
       </section>
 
-      <div class="prospect-subtabs">
+      <div class="flex flex-wrap gap-2">
         <button class="subtab-btn is-active" data-prospect-pane="prospectEntryPane">Saisie</button>
         <button class="subtab-btn" data-prospect-pane="prospectSearchPane">Recherches sur prospections actives</button>
       </div>
 
       <div id="prospectEntryPane" class="prospect-pane is-active">
-        <section class="prospection-card">
-          <div class="prospection-header">
-            <div>
-              <p class="eyebrow">Fiche en cours</p>
-              <h2 id="prospectOrgName">Sélectionnez une fiche</h2>
-              <div class="prospection-meta">
-                <span id="prospectCity" class="pill">Ville</span>
-                <span id="prospectPostcode" class="pill">Code postal</span>
-                <span class="pill" id="prospectDept">Département</span>
-              </div>
+        <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-5">
+          <div class="space-y-2">
+            <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Fiche en cours</p>
+            <h2 id="prospectOrgName" class="text-2xl font-bold">Sélectionnez une fiche</h2>
+            <div class="flex flex-wrap gap-2 text-sm">
+              <span id="prospectCity" class="pill badge badge-outline">Ville</span>
+              <span id="prospectPostcode" class="pill badge badge-outline">Code postal</span>
+              <span id="prospectDept" class="pill badge badge-outline">Département</span>
             </div>
           </div>
 
-          <div class="prospection-grid">
-            <div class="prospection-field">
-              <label for="prospectionDate1">Date 1er contact</label>
-              <input type="date" id="prospectionDate1" class="input" />
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="form-control space-y-2">
+              <label for="prospectionDate1" class="label-text text-sm">Date 1er contact</label>
+              <input type="date" id="prospectionDate1" class="input input-bordered" />
             </div>
-            <div class="prospection-field">
-              <label for="prospectionDate2">Date de rappel</label>
-              <input type="date" id="prospectionDate2" class="input" />
-              <div class="quick-dates quick-dates--stack">
-                <button type="button" class="pill pill--ghost" data-reminder-offset="7">+1 semaine</button>
-                <button type="button" class="pill pill--ghost" data-reminder-offset="14">+2 semaines</button>
-                <button type="button" class="pill pill--ghost" data-reminder-offset="21">+3 semaines</button>
+            <div class="form-control space-y-2">
+              <label for="prospectionDate2" class="label-text text-sm">Date de rappel</label>
+              <input type="date" id="prospectionDate2" class="input input-bordered" />
+              <div class="flex flex-wrap gap-2 pt-2">
+                <button type="button" class="pill badge badge-outline" data-reminder-offset="7">+1 semaine</button>
+                <button type="button" class="pill badge badge-outline" data-reminder-offset="14">+2 semaines</button>
+                <button type="button" class="pill badge badge-outline" data-reminder-offset="21">+3 semaines</button>
               </div>
             </div>
-            <div class="prospection-field prospection-field--wide">
-              <label for="prospectionCommentaires">Commentaires</label>
-              <textarea id="prospectionCommentaires" rows="7"></textarea>
+            <div class="form-control md:col-span-2 space-y-2">
+              <label for="prospectionCommentaires" class="label-text text-sm">Commentaires</label>
+              <textarea id="prospectionCommentaires" rows="4" class="textarea textarea-bordered min-h-[120px]"></textarea>
             </div>
           </div>
 
-          <div class="prospection-actions">
-            <button class="btn btn--primary" id="saveProspectionBtn">Enregistrer la prospection</button>
+          <div class="flex flex-wrap justify-end">
+            <button class="btn btn-primary" id="saveProspectionBtn">Enregistrer la prospection</button>
           </div>
-          <p class="prospection-note">Les dates sont enregistrées directement dans la feuille Google Sheets (Base_ehpad) sur la ligne correspondante.</p>
+          <p class="text-sm text-base-content/70">Les dates sont enregistrées directement dans la feuille Google Sheets (Base_ehpad) sur la ligne correspondante.</p>
         </section>
       </div>
 
       <div id="prospectSearchPane" class="prospect-pane">
-        <section class="panel">
-          <div class="panel__row panel__row--wrap filters-grid">
-            <div class="filter-block">
-              <p class="eyebrow">Département</p>
-              <div class="inline">
-                <input id="prospectDeptFilter" class="input" list="prospectDeptOptions" placeholder="Ex : 33, 75, 974" />
+        <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-4">
+          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div class="space-y-2">
+              <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Département</p>
+              <div class="flex flex-wrap gap-2 items-end">
+                <input id="prospectDeptFilter" class="input input-bordered input-sm w-28" list="prospectDeptOptions" placeholder="Ex : 33, 75, 974" />
                 <datalist id="prospectDeptOptions"></datalist>
-                <button id="prospectClearDept" class="btn btn--ghost">Effacer</button>
+                <button id="prospectClearDept" class="btn btn-ghost btn-sm">Effacer</button>
               </div>
             </div>
-            <div class="filter-block">
-              <p class="eyebrow">Date 1er contact</p>
-              <div class="inline inline--tight">
-                <input type="date" id="prospectDate1Start" class="input" />
-                <span class="muted">à</span>
-                <input type="date" id="prospectDate1End" class="input" />
+
+            <div class="space-y-2">
+              <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Plage 1er contact</p>
+              <div class="flex flex-wrap gap-2">
+                <input type="date" id="prospectDate1Start" class="input input-bordered input-sm" />
+                <input type="date" id="prospectDate1End" class="input input-bordered input-sm" />
               </div>
             </div>
-            <div class="filter-block">
-              <p class="eyebrow">Date de rappel</p>
-              <div class="inline inline--tight">
-                <input type="date" id="prospectDate2Start" class="input" />
-                <span class="muted">à</span>
-                <input type="date" id="prospectDate2End" class="input" />
+
+            <div class="space-y-2">
+              <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Plage rappel</p>
+              <div class="flex flex-wrap gap-2">
+                <input type="date" id="prospectDate2Start" class="input input-bordered input-sm" />
+                <input type="date" id="prospectDate2End" class="input input-bordered input-sm" />
               </div>
             </div>
-            <div class="filter-block">
-              <p class="eyebrow">Commentaires contient</p>
-              <div class="inline">
-                <input id="prospectCommentSearch" class="input" type="search" placeholder="Mot clé commentaire" />
-                <button id="prospectResetFilters" class="btn">Réinitialiser</button>
-              </div>
+
+            <div class="space-y-2">
+              <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Commentaire contient</p>
+              <input type="search" id="prospectCommentSearch" class="input input-bordered w-full" placeholder="Mot-clé dans les commentaires" />
             </div>
-            <div class="filter-block">
-              <p class="eyebrow">Statut légal</p>
-              <div id="prospectStatusFilter" class="chip-grid"></div>
+
+            <div class="space-y-2">
+              <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Statut légal</p>
+              <div id="prospectStatusFilter" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="flex items-end">
+              <button id="prospectResetFilters" class="btn btn-outline w-full">Réinitialiser</button>
             </div>
           </div>
-          <p class="helper" id="prospectFilterStatus">Filtres appliqués sur les prospections actives.</p>
+          <p class="helper text-sm" id="prospectFilterStatus"></p>
         </section>
 
-        <section class="card">
-          <div class="card__title">
+        <section class="bg-base-300 rounded-2xl shadow-lg border border-base-300/60 p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <p class="eyebrow">Prospections actives</p>
-              <h2 id="prospectResultsTitle">Une des colonnes prospection doit être renseignée</h2>
+              <p class="eyebrow text-primary text-xs font-semibold uppercase tracking-[0.12em]">Résultats prospection</p>
+              <h2 id="prospectResultsTitle" class="text-2xl font-bold">Filtrez pour voir vos prospections</h2>
             </div>
-            <div class="pill" id="prospectResultsCount">0 résultat</div>
+            <div class="pill badge badge-outline badge-lg" id="prospectResultsCount">0 résultat</div>
           </div>
-          <div class="table-wrapper" tabindex="0" id="prospectResultsWrapper">
-            <table id="prospectResultsTable">
+          <div class="overflow-auto rounded-xl border border-base-300/60" tabindex="0" id="prospectResultsWrapper">
+            <table id="prospectResultsTable" class="table table-zebra w-full text-sm">
               <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Département</th>
-                <th>Statut légal</th>
-                <th>Ville</th>
-                <th>1er contact</th>
-                <th>Rappel</th>
-                  <th>Commentaires</th>
+                <tr>
+                  <th>ID</th>
+                  <th>Nom</th>
+                  <th>Département</th>
+                  <th>Statut légal</th>
+                  <th>Ville</th>
+                  <th>Capacité</th>
+                  <th>Date contact</th>
+                  <th>Date rappel</th>
+                  <th>Commentaire</th>
                 </tr>
               </thead>
               <tbody></tbody>
